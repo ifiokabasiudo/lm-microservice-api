@@ -63,7 +63,7 @@ app.post("/api/api", async (req, res) => {
   const pinecone = new PineconeClient();
   await pinecone.init({
     environment: "us-central1-gcp",
-    apiKey: process.env.PINECONE_KEY,
+    apiKey: "05cb4d94-686d-4d1b-b412-fb561175026b",
   });
   console.log("pinecone point:", query);
 
