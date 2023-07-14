@@ -37,7 +37,7 @@ app.post("/api/api", async (req, res) => {
   console.log("Log Token", token);
   const regex = /token=([^;]+)/;
   const match = setTokenKey.match(regex);
-  const tokenValue = match ? match[1] : null;
+  const tokenValue = token;
   console.log(`lecture-mate-${tokenValue}`);
 
   if (!configuration.apiKey) {
