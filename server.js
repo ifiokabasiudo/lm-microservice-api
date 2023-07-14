@@ -32,12 +32,12 @@ app.use(express.json());
 app.post("/api/api", async (req, res) => {
   console.log(req.body);
   const { token } = req.body;
-  setCookie(res, "token", token, { path: "/app/chat", maxAge: 2592000 });
+  setCookie(res, "token", token, { path: "https://lecturemate.vercel.app/app/chat", maxAge: 2592000 });
   const setTokenKey = res.getHeader("Set-Cookie")[0];
   console.log("Log Token", token);
   const regex = /token=([^;]+)/;
   const match = setTokenKey.match(regex);
-  const tokenValue = token ? token[1] : null;
+  const tokenValue = match ? match[1] : null;
   console.log(`lecture-mate-${tokenValue}`);
 
   if (!configuration.apiKey) {
