@@ -38,21 +38,20 @@ app.post("/api/api", async (req, res) => {
   const userId = json.userId;
   console.log("This is the json: ", nameOfFile);
 
-  // const { data: pdfData } = await supabase
-  //   .from("pdfs")
-  //   .select("*")
-  //   .eq("pdf_name", nameOfFile)
-  //   .eq("user_id", userId);
+  const { data: pdfData } = await supabase
+    .from("pdfs")
+    .select("*")
+    .eq("pdf_name", nameOfFile)
+    .eq("user_id", userId);
 
-    const { data: pdfData, error } = await supabase.storage
-      .from("pdfFiles")
-      .download(`${userId}/${nameOfFile}`);
+    // const { data: pdfData, error } = await supabase.storage
+    //   .from("pdfFiles")
+    //   .download(`${userId}/${nameOfFile}`);
 
   console.log("extracted: ", JSON.stringify(pdfData));
 
   if (pdfData !== null || error) {
     console.log("length of file: ", pdfData.length);
-    console.log("Error: ", error)
   }
 
   if (!configuration.apiKey) {
@@ -93,7 +92,6 @@ app.post("/api/api", async (req, res) => {
 
   async function calculateSimilarityScores(userQueryEmbedding, pdfData) {
     const similarityScores = [];
-
     pdfData.forEach((row) => {
       const pageEmbedding = row.vector_data;
       const similarity = calculateDotProductSimilarity(
