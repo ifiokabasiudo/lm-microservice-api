@@ -165,7 +165,7 @@ app.post("/api/api", async (req, res) => {
       // Handle the case where there are no similarity scores
       console.log("No similarity scores found.");
       const finalPrompt = `
-      Info: Welcome the user to Lecture Mate in a polite manner and ask how you can be of service. You can use different approaches to welcome the user but always be friendly
+      Info: Welcome the user to Lecture Mate in a polite manner and ask how you can be of service. You can use different approaches to welcome the user but always be friendly.
       Question: ${query}.
       Answer:
     `;
