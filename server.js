@@ -83,9 +83,6 @@ app.post("/api/api", async (req, res) => {
     for (let i = 0; i < vector1.length; i++) {
       dotProduct += vector1[i] * vector2[i];
     }
-
-    console.log("It's me Ifiok2");
-
     return dotProduct;
   }
 
