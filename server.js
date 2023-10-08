@@ -102,53 +102,60 @@ app.post("/api/api", async (req, res) => {
     // Sort by similarity in descending order
     similarityScores.sort((a, b) => b.similarity - a.similarity);
 
-    // Select the top 5 pages
-    const top5SimilarPages = similarityScores.slice(0, 5);
-    console.log(top5SimilarPages);
-
-    // To get the results
-
-    const mostSimilar = top5SimilarPages[0].pageData.page_text;
-    const inputText = mostSimilar;
-
-    const plainText = inputText.replace(/[+\n]/g, '');
-
-    console.log(plainText);
-
-    console.log("Query Info:", plainText);
-    const finalPrompt = `
-        Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
-        Question: ${query}.
-        Answer:
-      `;
-
-    try {
-      const response = await openai.createCompletion({
-        model: COMPLETIONS_MODEL,
-        prompt: finalPrompt,
-        max_tokens: 2048,
-      });
-
-      const completion = response.data.choices[0].text;
-      console.log(completion);
-      console.log(query);
-
-      const result = {
-        query: query,
-        completion: completion,
-      };
-
-      console.log("Funny how this will work: " + JSON.stringify(result));
-
-      res.status(200).json(result);
-    } catch (error) {
-      if (error.response) {
-        console.error(error.response.status, error.response.data);
-        res.status(error.response.status).json(error.response.data);
-      } else {
-        console.error(`Error with request: ${error.message}`);
-        res.status(500).json({ error: "An error occurred during your request." });
-      }
+    if(similarityScores.length > 0){
+        // Select the top 5 pages
+        const top5SimilarPages = similarityScores.slice(0, 5);
+        console.log(top5SimilarPages);
+    
+        // To get the results
+    
+        const mostSimilar = top5SimilarPages[0].pageData.page_text;
+        const inputText = mostSimilar;
+    
+        const plainText = inputText.replace(/[+\n]/g, '');
+    
+        console.log(plainText);
+    
+        console.log("Query Info:", plainText);
+        const finalPrompt = `
+            Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
+            Question: ${query}.
+            Answer:
+          `;
+    
+        try {
+          const response = await openai.createCompletion({
+            model: COMPLETIONS_MODEL,
+            prompt: finalPrompt,
+            max_tokens: 2048,
+          });
+    
+          const completion = response.data.choices[0].text;
+          console.log(completion);
+          console.log(query);
+    
+          const result = {
+            query: query,
+            completion: completion,
+          };
+    
+          console.log("Funny how this will work: " + JSON.stringify(result));
+    
+          res.status(200).json(result);
+        } catch (error) {
+          if (error.response) {
+            console.error(error.response.status, error.response.data);
+            res.status(error.response.status).json(error.response.data);
+          } else {
+            console.error(`Error with request: ${error.message}`);
+            res.status(500).json({ error: "An error occurred during your request." });
+          }
+        }
+    }else {
+      console.log("No similarity scores found.");
+      console.error("No similarity scores found.");
+      res.status(500).json({ error: "No Similarity scores were found" });
+      // Handle the case where there are no similarity scores
     }
   }
 
