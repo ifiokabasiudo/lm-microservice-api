@@ -33,7 +33,7 @@ app.use(express.json()); // Parse JSON requests
 
 app.post("/api/api", async (req, res) => {
   const json = req.body;
-  const nameOfFile = window.localStorage.getItem("file"); // Replace with your logic to get the file name
+  const nameOfFile = json.nameOfFile; // Replace with your logic to get the file name
 
   const userId = json.userId;
   console.log("This is the json: ", nameOfFile);
