@@ -38,16 +38,21 @@ app.post("/api/api", async (req, res) => {
   const userId = json.userId;
   console.log("This is the json: ", nameOfFile);
 
-  const { data: pdfData } = await supabase
-    .from("pdfs")
-    .select("*")
-    .eq("pdf_name", nameOfFile)
-    .eq("user_id", userId);
+  // const { data: pdfData } = await supabase
+  //   .from("pdfs")
+  //   .select("*")
+  //   .eq("pdf_name", nameOfFile)
+  //   .eq("user_id", userId);
+
+    const { data: pdfData, error } = await supabase.storage
+      .from("pdfFiles")
+      .download(`${userId}/${nameOfFile}`);
 
   console.log("extracted: ", JSON.stringify(pdfData));
 
-  if (pdfData !== null) {
+  if (pdfData !== null || error) {
     console.log("length of file: ", pdfData.length);
+    console.log("Error: ", error)
   }
 
   if (!configuration.apiKey) {
@@ -160,7 +165,7 @@ app.post("/api/api", async (req, res) => {
       // Handle the case where there are no similarity scores
       console.log("No similarity scores found.");
       const finalPrompt = `
-      Info: Welcome the user to Lecture Mate in a polite manner and ask how you can be of service
+      Info: Welcome the user to Lecture Mate in a polite manner and ask how you can be of service. You can use different approaches to welcome the user but always be friendly
       Question: ${query}.
       Answer:
     `;
