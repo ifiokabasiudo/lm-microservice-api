@@ -1,6 +1,7 @@
 const express = require("express");
 const axios = require("axios"); // You may need to install axios if not already installed
 const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require('openai');
 const { createClient } = require("@supabase/supabase-js");
 const cors = require("cors");
 require("dotenv").config();
@@ -10,14 +11,13 @@ const app = express();
 app.use(cors());
 
 // Initialize Openai
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // defaults to process.env["OPENAI_API_KEY"]
 });
-const openai = new OpenAIApi(configuration);
 
-if (!configuration.apiKey) {
-  console.log("Error: OpenAI API key not properly configured");
-  process.exit(1); // Terminate the Node.js process
+if (!openai.apiKey) {
+  console.log("Error");
+  // return;
 } else {
   console.log("It's working");
 }
@@ -54,7 +54,7 @@ app.post("/api/api", async (req, res) => {
     console.log("length of file: ", pdfData.length);
   }
 
-  if (!configuration.apiKey) {
+  if (!openai.apiKey) {
     console.error("OpenAI API key not properly configured");
     res.status(500).json({ error: "OpenAI API key not properly configured" });
     return;
@@ -68,7 +68,7 @@ app.post("/api/api", async (req, res) => {
     return;
   }
 
-  const queryEmbedding = await openai.createEmbedding({
+  const queryEmbedding = await openai.embeddings.create({
     model: EMBEDDING_MODEL,
     input: query,
   });
@@ -77,6 +77,148 @@ app.post("/api/api", async (req, res) => {
   const xq = queryEmbedding.data.data[0].embedding;
 
   console.log("embedding: " + xq);
+
+  const createUser = async (finalPrompt) => {
+    const { data, error } = await supabase
+    .from('chats')
+    .insert([{ user_id: userId,  chats: [{role: 'user', content: finalPrompt}]}])
+    .select()
+
+    console.log(data)
+  }
+
+  const upsertAssistant = async (response) => {
+    const { data: rowData, error } = await supabase
+    .from('chats')
+    .select('chats')
+    .eq('user_id', userId);
+
+    if (rowData && rowData.length > 0) {
+      const currentArray = rowData[0].chats;
+      const newValue = {role: 'assistant', content: response};
+      
+      const updatedArray = [...currentArray, newValue];           
+      // You can also perform other modifications as needed.
+
+      if (updatedArray) {
+        const { data: updatedData, error: updateError } = await supabase
+          .from('chats')
+          .update({ chats: updatedArray })
+          .eq('user_id', userId);
+      
+        if (updateError) {
+          // Handle the update error.
+          console.log(updateError)
+        } else {
+          // Handle the successful update.
+          console.log(updatedData)
+        }
+      }
+    }
+  }
+
+  const upsertUser = async (finalPrompt) => {
+    const { data: rowData, error } = await supabase
+    .from('chats')
+    .select('chats')
+    .eq('user_id', userId);
+
+    if (rowData && rowData.length > 0) {
+      const currentArray = rowData[0].chats;
+      const newValue = {role: 'user', content: finalPrompt};
+      
+      const updatedArray = [...currentArray, newValue];           
+      // You can also perform other modifications as needed.
+
+      if (updatedArray) {
+        const { data: updatedData, error: updateError } = await supabase
+          .from('chats')
+          .update({ chats: updatedArray })
+          .eq('user_id', userId);
+      
+        if (updateError) {
+          // Handle the update error.
+          console.log(updateError)
+        } else {
+          // Handle the successful update.
+          console.log(updatedData)
+        }
+      }
+    }
+  }
+
+  const checkIfRowExists = async (finalPrompt) => {
+    const condition = { column_value: userId }; // Replace with your own condition
+
+    const { data, error } = await supabase
+    .from('chats')
+    .select()
+    .eq('user_id', condition.column_value);
+
+    if (data && data.length > 0) {
+      upsertUser(finalPrompt)
+    } else {
+      createUser(finalPrompt)
+    }
+  }
+
+  const getChatHistory = async () => {
+    const condition = { column_value: userId }; // Replace with your own condition
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    const data = await delay(5000).then(async () => {
+      const { data, error } = await supabase
+        .from('chats')
+        .select()
+        .eq('user_id', condition.column_value);
+  
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("This is the get chat history: " + JSON.stringify(data[0].chats));
+        return data[0].chats;
+      }
+    });
+  
+    return data;
+  }
+
+  const processAnswers = async () => {
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+      const result = delay(7000).then(async () => {
+      const history = await getChatHistory()
+      console.log("This is the history: " + history)
+      console.log("This is the history: " + JSON.stringify(history))
+
+      
+        const chatCompletion = await openai.chat.completions.create({
+          messages: history,
+          model: 'gpt-3.5-turbo',
+        });
+      
+        console.log(chatCompletion.choices);
+        
+        const chatResponse = chatCompletion.choices[0].message.content
+        upsertAssistant(chatResponse)
+
+        const history2 = await getChatHistory()
+
+        const result= {
+          query: history2,
+          completion: chatResponse
+        }
+
+        return result 
+    })
+    return result
+  }
 
   function calculateDotProductSimilarity(vector1, vector2) {
     if (vector1.length !== vector2.length) {
@@ -130,20 +272,24 @@ app.post("/api/api", async (req, res) => {
           `;
 
       try {
-        const response = await openai.createCompletion({
-          model: COMPLETIONS_MODEL,
-          prompt: finalPrompt,
-          max_tokens: 2048,
-        });
 
-        const completion = response.data.choices[0].text;
-        console.log(completion);
-        console.log(query);
+        checkIfRowExists(finalPrompt)
+        const result = await processAnswers()
 
-        const result = {
-          query: query,
-          completion: completion,
-        };
+        // const response = await openai.createCompletion({
+        //   model: COMPLETIONS_MODEL,
+        //   prompt: finalPrompt,
+        //   max_tokens: 2048,
+        // });
+
+        // const completion = response.data.choices[0].text;
+        // console.log(completion);
+        // console.log(query);
+
+        // const result = {
+        //   query: query,
+        //   completion: completion,
+        // };
 
         console.log("Funny how this will work: " + JSON.stringify(result));
 
@@ -162,27 +308,29 @@ app.post("/api/api", async (req, res) => {
     } else {
       // Handle the case where there are no similarity scores
       console.log("No similarity scores found.");
-      const finalPrompt = `
-      Info: Welcome the user to Lecture Mate in a polite manner and ask how you can be of service. You can use different approaches to welcome the user but always be friendly.
-      Question: ${query}.
-      Answer:
-    `;
+    //   const finalPrompt = `
+    //   Info: Welcome the user to Lecture Mate in a polite manner and ask how you can be of service. You can use different approaches to welcome the user but always be friendly.
+    //   Question: ${query}.
+    //   Answer:
+    // `;
 
       try {
-        const response = await openai.createCompletion({
-          model: COMPLETIONS_MODEL,
-          prompt: finalPrompt,
-          max_tokens: 2048,
-        });
+        checkIfRowExists(query)
+        const result = await processAnswers()
+        // const response = await openai.createCompletion({
+        //   model: COMPLETIONS_MODEL,
+        //   prompt: finalPrompt,
+        //   max_tokens: 2048,
+        // });
 
-        const completion = response.data.choices[0].text;
-        console.log(completion);
-        console.log(query);
+        // const completion = response.data.choices[0].text;
+        // console.log(completion);
+        // console.log(query);
 
-        const result = {
-          query: query,
-          completion: completion,
-        };
+        // const result = {
+        //   query: query,
+        //   completion: completion,
+        // };
 
         // console.log("Funny how this will work: " + JSON.stringify(result));
 
