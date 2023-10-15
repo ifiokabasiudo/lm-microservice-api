@@ -72,7 +72,7 @@ app.post("/api/api", async (req, res) => {
   });
   console.log("openai point:", query);
 
-  const xq = queryEmbedding.data.data[0].embedding;
+  const xq = queryEmbedding.data[0].embedding;
 
   console.log("embedding: " + xq);
 
@@ -232,7 +232,7 @@ app.post("/api/api", async (req, res) => {
         console.log(chatCompletion.choices);
         
         const chatResponse = chatCompletion.choices[0].message.content
-        
+
         if(!chatResponse){
           deleteLastQuestion()
         }else{
