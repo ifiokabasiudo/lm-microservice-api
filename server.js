@@ -1,6 +1,5 @@
 const express = require("express");
 const axios = require("axios"); // You may need to install axios if not already installed
-const { Configuration, OpenAIApi } = require("openai");
 const { OpenAI } = require('openai');
 const { createClient } = require("@supabase/supabase-js");
 const cors = require("cors");
@@ -34,7 +33,6 @@ app.use(express.json()); // Parse JSON requests
 app.post("/api/api", async (req, res) => {
   const json = req.body;
   const nameOfFile = json.nameOfFile; // Replace with your logic to get the file name
-
   const userId = json.userId;
   console.log("This is the json: ", nameOfFile);
 
@@ -186,6 +184,33 @@ app.post("/api/api", async (req, res) => {
     return data;
   }
 
+  const deleteLastQuestion = async () => {
+    const { data: rowData, error } = await supabase
+    .from('chats')
+    .select('chats')
+    .eq('user_id', userId);
+
+    if (rowData && rowData.length > 0) {
+      const newArray = rowData[0].chats;
+      const revertedArray = newArray.pop();
+
+      if (revertedArray) {
+        const { data: revertedData, error: revertError } = await supabase
+          .from('chats')
+          .update({ chats: revertedArray })
+          .eq('user_id', userId);
+      
+        if (revertError) {
+          // Handle the update error.
+          console.log(revertError)
+        } else {
+          // Handle the successful update.
+          console.log(revertedData)
+        }
+      }
+    }
+  }
+
   const processAnswers = async () => {
 
     function delay(ms) {
@@ -201,13 +226,19 @@ app.post("/api/api", async (req, res) => {
         const chatCompletion = await openai.chat.completions.create({
           messages: history,
           model: 'gpt-3.5-turbo',
+          max_tokens: 2048,
         });
       
         console.log(chatCompletion.choices);
         
         const chatResponse = chatCompletion.choices[0].message.content
-        upsertAssistant(chatResponse)
-
+        
+        if(!chatResponse){
+          deleteLastQuestion()
+        }else{
+          upsertAssistant(chatResponse)
+        }
+        
         const history2 = await getChatHistory()
 
         const result= {
