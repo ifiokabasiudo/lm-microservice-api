@@ -272,11 +272,12 @@ app.post("/api/api", async (req, res) => {
               max_tokens: 2048,
             });
           
-            console.log(chatCompletion.choices);
+            console.log("Chat completion: " + chatCompletion);
+            console.log("Chat completion.choices: " + chatCompletion.choices);
             
             const chatResponse = chatCompletion.choices[0].message.content
     
-            if(!chatResponse || chatResponse === null){
+            if(chatCompletion.choices[0].length === 0){
               deleteLastQuestion()
             }else{
               upsertAssistant(chatResponse)
