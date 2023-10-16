@@ -77,6 +77,77 @@ app.post("/api/api", async (req, res) => {
 
   console.log("embedding: " + xq);
 
+  const deleteLastQuestion = async () => {
+    try{
+      const { data: rowData, error } = await supabase
+      .from('chats')
+      .select('chats')
+      .eq('user_id', userId);
+  
+      if (rowData && rowData.length > 0) {
+        const newArray = rowData[0].chats;
+        const revertedArray = newArray.pop();
+  
+        if (revertedArray) {
+          try {
+            const { data: revertedData, error: revertError } = await supabase
+            .from('chats')
+            .update({ chats: revertedArray })
+            .eq('user_id', userId);
+        
+          if (revertError) {
+            // Handle the update error.
+            console.log(revertError)
+          } else {
+            // Handle the successful update.
+            console.log(revertedData)
+          }          
+          } catch (err) {
+            console.log(err)
+          }
+        }
+      }
+    }catch(err){
+      console.log(err)
+    }    
+  }
+
+  const getChatHistory = async () => {
+    try{
+      const condition = { column_value: userId }; // Replace with your own condition
+
+      function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+  
+      const data = await delay(5000).then(async () => {
+        try {
+          const { data, error } = await supabase
+          .from('chats')
+          .select()
+          .eq('user_id', condition.column_value);
+    
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("This is the get chat history: " + JSON.stringify(data[0].chats));
+          return data[0].chats;
+        }
+        } catch (err) {
+         console.log(err) 
+         const history = await getChatHistory()
+          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
+            deleteLastQuestion()
+          }
+        }
+      });
+    
+      return data;
+    }catch(err){
+      console.log(err)
+    }    
+  }
+
   const createUser = async (finalPrompt) => {
     try{
       const { data, error } = await supabase
@@ -141,7 +212,6 @@ app.post("/api/api", async (req, res) => {
         
         const updatedArray = [...currentArray, newValue];           
         // You can also perform other modifications as needed.
-  
         if (updatedArray) {
           try {
             const { data: updatedData, error: updateError } = await supabase
@@ -176,7 +246,13 @@ app.post("/api/api", async (req, res) => {
       .eq('user_id', condition.column_value);
   
       if (data && data.length > 0) {
-        upsertUser(finalPrompt)
+        const history = await getChatHistory()
+          if(history[history.length-1].role === "assistant"){
+            upsertUser(finalPrompt)
+          }
+          else{
+            res.json(400).send("There was an error sending your query")
+          }
       } else {
         createUser(finalPrompt)
       }
@@ -184,77 +260,6 @@ app.post("/api/api", async (req, res) => {
       console.log(err)
     }
     
-  }
-
-  const deleteLastQuestion = async () => {
-    try{
-      const { data: rowData, error } = await supabase
-      .from('chats')
-      .select('chats')
-      .eq('user_id', userId);
-  
-      if (rowData && rowData.length > 0) {
-        const newArray = rowData[0].chats;
-        const revertedArray = newArray.pop();
-  
-        if (revertedArray) {
-          try {
-            const { data: revertedData, error: revertError } = await supabase
-            .from('chats')
-            .update({ chats: revertedArray })
-            .eq('user_id', userId);
-        
-          if (revertError) {
-            // Handle the update error.
-            console.log(revertError)
-          } else {
-            // Handle the successful update.
-            console.log(revertedData)
-          }          
-          } catch (err) {
-            console.log(err)
-          }
-        }
-      }
-    }catch(err){
-      console.log(err)
-    }    
-  }
-
-  const getChatHistory = async () => {
-    try{
-      const condition = { column_value: userId }; // Replace with your own condition
-
-      function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-      }
-  
-      const data = await delay(5000).then(async () => {
-        try {
-          const { data, error } = await supabase
-          .from('chats')
-          .select()
-          .eq('user_id', condition.column_value);
-    
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("This is the get chat history: " + JSON.stringify(data[0].chats));
-          return data[0].chats;
-        }
-        } catch (err) {
-         console.log(err) 
-         const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0){
-            deleteLastQuestion()
-          }
-        }
-      });
-    
-      return data;
-    }catch(err){
-      console.log(err)
-    }    
   }
 
   const processAnswers = async () => {
@@ -281,7 +286,12 @@ app.post("/api/api", async (req, res) => {
             
             const chatResponse = chatCompletion.choices[0].message.content
 
-            upsertAssistant(chatResponse)
+            if(history[history.length-1].role === "user"){
+              upsertAssistant(chatResponse)
+            }
+            else{
+              res.json(400).send("There was an error sending your query")
+            }
             
             const history2 = await getChatHistory()
     
@@ -294,7 +304,7 @@ app.post("/api/api", async (req, res) => {
         } catch (err) {
           console.log(err)
           const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0){
+          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
             deleteLastQuestion()
           }
         }
@@ -303,7 +313,7 @@ app.post("/api/api", async (req, res) => {
     } catch (err) {
       console.log(err)
       const history = await getChatHistory()
-      if(history.length % 2 !== 0 && history.length !== 0){
+      if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
         deleteLastQuestion()
       }
     }    
@@ -390,7 +400,7 @@ app.post("/api/api", async (req, res) => {
           res.status(200).json(result);
         } catch (error) {
           const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0){
+          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
             deleteLastQuestion()
           }
           if (error.response) {
@@ -435,7 +445,7 @@ app.post("/api/api", async (req, res) => {
           res.status(200).json(result);
         } catch (error) {
           const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0){
+          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
             deleteLastQuestion()
           }
 
@@ -453,7 +463,7 @@ app.post("/api/api", async (req, res) => {
     } catch (err) {
       console.log(err)
       const history = await getChatHistory()
-      if(history.length % 2 !== 0 && history.length !== 0){
+      if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
         deleteLastQuestion()
       }
     }    
