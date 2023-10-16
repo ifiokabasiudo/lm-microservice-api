@@ -186,38 +186,6 @@ app.post("/api/api", async (req, res) => {
     
   }
 
-  const getChatHistory = async () => {
-    try{
-      const condition = { column_value: userId }; // Replace with your own condition
-
-      function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-      }
-  
-      const data = await delay(5000).then(async () => {
-        try {
-          const { data, error } = await supabase
-          .from('chats')
-          .select()
-          .eq('user_id', condition.column_value);
-    
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("This is the get chat history: " + JSON.stringify(data[0].chats));
-          return data[0].chats;
-        }
-        } catch (err) {
-         console.log(err) 
-        }
-      });
-    
-      return data;
-    }catch(err){
-      console.log(err)
-    }    
-  }
-
   const deleteLastQuestion = async () => {
     try{
       const { data: rowData, error } = await supabase
@@ -253,6 +221,42 @@ app.post("/api/api", async (req, res) => {
     }    
   }
 
+  const getChatHistory = async () => {
+    try{
+      const condition = { column_value: userId }; // Replace with your own condition
+
+      function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+  
+      const data = await delay(5000).then(async () => {
+        try {
+          const { data, error } = await supabase
+          .from('chats')
+          .select()
+          .eq('user_id', condition.column_value);
+    
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("This is the get chat history: " + JSON.stringify(data[0].chats));
+          return data[0].chats;
+        }
+        } catch (err) {
+         console.log(err) 
+         const history = await getChatHistory()
+          if(history.length % 2 !== 0 && history.length !== 0){
+            deleteLastQuestion()
+          }
+        }
+      });
+    
+      return data;
+    }catch(err){
+      console.log(err)
+    }    
+  }
+
   const processAnswers = async () => {
     try {
       function delay(ms) {
@@ -276,12 +280,8 @@ app.post("/api/api", async (req, res) => {
             console.log("Chat completion.choices: " + chatCompletion.choices);
             
             const chatResponse = chatCompletion.choices[0].message.content
-    
-            if(chatCompletion.choices[0].length === 0){
-              deleteLastQuestion()
-            }else{
-              upsertAssistant(chatResponse)
-            }
+
+            upsertAssistant(chatResponse)
             
             const history2 = await getChatHistory()
     
@@ -293,11 +293,19 @@ app.post("/api/api", async (req, res) => {
             return result  
         } catch (err) {
           console.log(err)
+          const history = await getChatHistory()
+          if(history.length % 2 !== 0 && history.length !== 0){
+            deleteLastQuestion()
+          }
         }
       })
       return result
     } catch (err) {
       console.log(err)
+      const history = await getChatHistory()
+      if(history.length % 2 !== 0 && history.length !== 0){
+        deleteLastQuestion()
+      }
     }    
   }
 
@@ -381,6 +389,10 @@ app.post("/api/api", async (req, res) => {
   
           res.status(200).json(result);
         } catch (error) {
+          const history = await getChatHistory()
+          if(history.length % 2 !== 0 && history.length !== 0){
+            deleteLastQuestion()
+          }
           if (error.response) {
             console.error(error.response.status, error.response.data);
             res.status(error.response.status).json(error.response.data);
@@ -422,6 +434,11 @@ app.post("/api/api", async (req, res) => {
   
           res.status(200).json(result);
         } catch (error) {
+          const history = await getChatHistory()
+          if(history.length % 2 !== 0 && history.length !== 0){
+            deleteLastQuestion()
+          }
+
           if (error.response) {
             console.error(error.response.status, error.response.data);
             res.status(error.response.status).json(error.response.data);
@@ -435,6 +452,10 @@ app.post("/api/api", async (req, res) => {
       }
     } catch (err) {
       console.log(err)
+      const history = await getChatHistory()
+      if(history.length % 2 !== 0 && history.length !== 0){
+        deleteLastQuestion()
+      }
     }    
   }
 
