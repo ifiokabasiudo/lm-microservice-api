@@ -36,6 +36,7 @@ app.post("/api/api", async (req, res) => {
   const nameOfFile = json.nameOfFile; // Replace with your logic to get the file name
   const userId = json.userId;
   const retryQuery = json.retryQuery;
+  const query = json.query || "";
   console.log("This is the json: ", nameOfFile);
 
   const { data: pdfData } = await supabase
@@ -70,8 +71,6 @@ app.post("/api/api", async (req, res) => {
   
     console.log("embedding: " + xq);
   }else{
-    const query = json.query || "";
-
     if (query.trim().length === 0) {
       console.error("Please enter a question");
       res.status(500).json({ error: "Please enter a question" });
