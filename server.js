@@ -61,13 +61,15 @@ app.post("/api/api", async (req, res) => {
     return;
   }
 
+  let xq
+
   if(retryQuery !== undefined){
     const queryEmbedding = await openai.embeddings.create({
       model: EMBEDDING_MODEL,
       input: retryQuery[retryQuery.length-1].content,
     });
 
-    const xq = queryEmbedding.data[0].embedding;
+    xq = queryEmbedding.data[0].embedding;
   
     console.log("embedding: " + xq);
   }else{
@@ -83,7 +85,7 @@ app.post("/api/api", async (req, res) => {
     });
     console.log("openai point:", query);
   
-    const xq = queryEmbedding.data[0].embedding;
+    xq = queryEmbedding.data[0].embedding;
   
     console.log("embedding: " + xq);
   }
@@ -382,7 +384,8 @@ app.post("/api/api", async (req, res) => {
         console.log(plainText);
   
         console.log("Query Info:", plainText);
-        const finalPrompt = `
+        if(retryQuery === undefined){
+          const finalPrompt = `
               Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
               Question: ${query}.
               Answer:
@@ -413,6 +416,39 @@ app.post("/api/api", async (req, res) => {
               .json({ error: "An error occurred during your request." });
           }
         }
+        }else{
+          const finalPrompt = `
+              Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
+              Question: ${retryQuery[retryQuery.length-1].content}.
+              Answer:
+            `;
+  
+        try {
+            if(retryQuery === undefined){
+              checkIfRowExists(finalPrompt)
+            }               
+          
+          const result = await processAnswers()
+          
+          console.log("Funny how this will work: " + JSON.stringify(result));
+  
+          res.status(200).json(result);
+        } catch (error) {
+          const history = await getChatHistory()
+          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
+            deleteLastQuestion()
+          }
+          if (error.response) {
+            console.error(error.response.status, error.response.data);
+            res.status(error.response.status).json(error.response.data);
+          } else {
+            console.error(`Error with request: ${error.message}`);
+            res
+              .status(500)
+              .json({ error: "An error occurred during your request." });
+          }
+        }
+        }        
       } else {
         // Handle the case where there are no similarity scores
         console.log("No similarity scores found.");
