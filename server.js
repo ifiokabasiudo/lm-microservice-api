@@ -71,7 +71,7 @@ app.post("/api/api", async (req, res) => {
   if(retryQuery){
     const queryEmbedding = await openai.embeddings.create({
       model: EMBEDDING_MODEL,
-      input: retryQuery,
+      input: retryQuery[retryQuery.length-1].content,
     });
     console.log("openai point:", query);
   
