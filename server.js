@@ -62,7 +62,7 @@ app.post("/api/api", async (req, res) => {
 
   const query = json.query || "";
 
-  if (query.trim().length === 0) {
+  if (!retryQuery && query.trim().length === 0) {
     console.error("Please enter a question");
     res.status(500).json({ error: "Please enter a question" });
     return;
