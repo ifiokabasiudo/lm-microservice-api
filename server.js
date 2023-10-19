@@ -392,10 +392,7 @@ app.post("/api/api", async (req, res) => {
             `;
   
         try {
-            if(retryQuery === undefined){
               checkIfRowExists(finalPrompt)
-            }               
-          
           const result = await processAnswers()
           
           console.log("Funny how this will work: " + JSON.stringify(result));
@@ -417,17 +414,7 @@ app.post("/api/api", async (req, res) => {
           }
         }
         }else{
-          const finalPrompt = `
-              Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
-              Question: ${retryQuery[retryQuery.length-1].content}.
-              Answer:
-            `;
-  
         try {
-            if(retryQuery === undefined){
-              checkIfRowExists(finalPrompt)
-            }               
-          
           const result = await processAnswers()
           
           console.log("Funny how this will work: " + JSON.stringify(result));
