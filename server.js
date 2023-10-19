@@ -62,16 +62,16 @@ app.post("/api/api", async (req, res) => {
 
   const query = json.query || "";
 
-  if (!retryQuery && query.trim().length === 0) {
+  if (retryQuery === undefined && query.trim().length === 0) {
     console.error("Please enter a question");
     res.status(500).json({ error: "Please enter a question" });
     return;
   }
 
-  if(retryQuery){
+  if(retryQuery !== undefined){
     const queryEmbedding = await openai.embeddings.create({
       model: EMBEDDING_MODEL,
-      input: "Some random question",
+      input: retryQuery[retryQuery.length-1].content,
     });
     console.log("openai point:", query);
   
@@ -391,7 +391,7 @@ app.post("/api/api", async (req, res) => {
             `;
   
         try {
-            if(!retryQuery){
+            if(retryQuery === undefined){
               checkIfRowExists(finalPrompt)
             }               
           
@@ -419,7 +419,7 @@ app.post("/api/api", async (req, res) => {
         // Handle the case where there are no similarity scores
         console.log("No similarity scores found.");
         try {
-          if(!retryQuery){
+          if(retryQuery === undefined){
             checkIfRowExists(query)
           }
           const result = await processAnswers()
