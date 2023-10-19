@@ -32,9 +32,10 @@ app.use(express.json()); // Parse JSON requests
 
 app.post("/api/api", async (req, res) => {
   try {
-    const json = req.body;
+  const json = req.body;
   const nameOfFile = json.nameOfFile; // Replace with your logic to get the file name
   const userId = json.userId;
+  const retryQuery = json.retryQuery;
   console.log("This is the json: ", nameOfFile);
 
   const { data: pdfData } = await supabase
@@ -67,15 +68,28 @@ app.post("/api/api", async (req, res) => {
     return;
   }
 
-  const queryEmbedding = await openai.embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: query,
-  });
-  console.log("openai point:", query);
-
-  const xq = queryEmbedding.data[0].embedding;
-
-  console.log("embedding: " + xq);
+  if(retryQuery){
+    const queryEmbedding = await openai.embeddings.create({
+      model: EMBEDDING_MODEL,
+      input: retryQuery,
+    });
+    console.log("openai point:", query);
+  
+    const xq = queryEmbedding.data[0].embedding;
+  
+    console.log("embedding: " + xq);
+  }else{
+    const queryEmbedding = await openai.embeddings.create({
+      model: EMBEDDING_MODEL,
+      input: query,
+    });
+    console.log("openai point:", query);
+  
+    const xq = queryEmbedding.data[0].embedding;
+  
+    console.log("embedding: " + xq);
+  }
+  
 
   const deleteLastQuestion = async () => {
     try{
@@ -247,6 +261,7 @@ app.post("/api/api", async (req, res) => {
   
       if (data && data.length > 0) {
         const history = await getChatHistory()
+
           if(history[history.length-1].role === "assistant"){
             upsertUser(finalPrompt)
           }
@@ -376,25 +391,12 @@ app.post("/api/api", async (req, res) => {
             `;
   
         try {
-  
-          checkIfRowExists(finalPrompt)
+            if(!retryQuery){
+              checkIfRowExists(finalPrompt)
+            }               
+          
           const result = await processAnswers()
-  
-          // const response = await openai.createCompletion({
-          //   model: COMPLETIONS_MODEL,
-          //   prompt: finalPrompt,
-          //   max_tokens: 2048,
-          // });
-  
-          // const completion = response.data.choices[0].text;
-          // console.log(completion);
-          // console.log(query);
-  
-          // const result = {
-          //   query: query,
-          //   completion: completion,
-          // };
-  
+          
           console.log("Funny how this will work: " + JSON.stringify(result));
   
           res.status(200).json(result);
@@ -416,32 +418,11 @@ app.post("/api/api", async (req, res) => {
       } else {
         // Handle the case where there are no similarity scores
         console.log("No similarity scores found.");
-      //   const finalPrompt = `
-      //   Info: Welcome the user to Lecture Mate in a polite manner and ask how you can be of service. You can use different approaches to welcome the user but always be friendly.
-      //   Question: ${query}.
-      //   Answer:
-      // `;
-  
         try {
-          checkIfRowExists(query)
+          if(!retryQuery){
+            checkIfRowExists(query)
+          }
           const result = await processAnswers()
-          // const response = await openai.createCompletion({
-          //   model: COMPLETIONS_MODEL,
-          //   prompt: finalPrompt,
-          //   max_tokens: 2048,
-          // });
-  
-          // const completion = response.data.choices[0].text;
-          // console.log(completion);
-          // console.log(query);
-  
-          // const result = {
-          //   query: query,
-          //   completion: completion,
-          // };
-  
-          // console.log("Funny how this will work: " + JSON.stringify(result));
-  
           res.status(200).json(result);
         } catch (error) {
           const history = await getChatHistory()
