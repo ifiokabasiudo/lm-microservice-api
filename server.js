@@ -316,6 +316,7 @@ app.post("/api/api", async (req, res) => {
               upsertAssistant(chatResponse)
             }
             else{
+              console.log("This was the error")
               res.json(400).send("There was an error sending your query")
             }
             
