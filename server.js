@@ -64,14 +64,19 @@ app.post("/api/api", async (req, res) => {
   let xq
 
   if(retryQuery !== undefined){
-    const queryEmbedding = await openai.embeddings.create({
-      model: EMBEDDING_MODEL,
-      input: retryQuery[retryQuery.length-1].content,
-    });
-
-    xq = queryEmbedding.data[0].embedding;
+    try {
+      const queryEmbedding = await openai.embeddings.create({
+        model: EMBEDDING_MODEL,
+        input: retryQuery[retryQuery.length-1].content,
+      });
   
-    console.log("embedding: " + xq);
+      xq = queryEmbedding.data[0].embedding;
+    
+      console.log("embedding: " + xq);     
+    } catch (error) {
+      console.log(error)
+    }
+
   }else{
     if (query.trim().length === 0) {
       console.error("Please enter a question");
@@ -79,17 +84,21 @@ app.post("/api/api", async (req, res) => {
       return;
     }
 
-    console.log("It got here: "+ query)
+    try{
+      console.log("It got here: "+ query)
 
-    const queryEmbedding = await openai.embeddings.create({
-      model: EMBEDDING_MODEL,
-      input: query,
-    });
-    console.log("openai point:", query);
-  
-    xq = queryEmbedding.data[0].embedding;
-  
-    console.log("embedding: " + xq);
+      const queryEmbedding = await openai.embeddings.create({
+        model: EMBEDDING_MODEL,
+        input: query,
+      });
+      console.log("openai point:", query);
+    
+      xq = queryEmbedding.data[0].embedding;
+    
+      console.log("embedding: " + xq);
+    }catch(err){
+      console.log(err)
+    }
   }
   
 
