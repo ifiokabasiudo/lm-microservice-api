@@ -299,10 +299,21 @@ app.post("/api/api", async (req, res) => {
           const history = await getChatHistory()
           console.log("This is the history: " + history)
           console.log("This is the history: " + JSON.stringify(history))
+
+          // Define the number of elements to log (e.g., 20)
+          const elementsToRemember = 21;
+
+          // Use a conditional statement to slice the array
+          const lastElements = history.length > elementsToRemember
+            ? originalArray.slice(-elementsToRemember)
+            : originalArray;
+
+          // Log the last elements
+          console.log("These are the last elements" + lastElements);
     
           
             const chatCompletion = await openai.chat.completions.create({
-              messages: history,
+              messages: lastElements,
               model: 'gpt-3.5-turbo',
               max_tokens: 2048,
             });
