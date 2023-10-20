@@ -79,6 +79,8 @@ app.post("/api/api", async (req, res) => {
       return;
     }
 
+    console.log("It got here: "+ query)
+
     const queryEmbedding = await openai.embeddings.create({
       model: EMBEDDING_MODEL,
       input: query,
