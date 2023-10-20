@@ -405,7 +405,7 @@ app.post("/api/api", async (req, res) => {
             `;
   
         try {
-              checkIfRowExists(finalPrompt)
+             await checkIfRowExists(finalPrompt)
           const result = await processAnswers()
           
           console.log("Funny how this will work: " + JSON.stringify(result));
@@ -454,7 +454,7 @@ app.post("/api/api", async (req, res) => {
         console.log("No similarity scores found.");
         try {
           if(retryQuery === undefined){
-            checkIfRowExists(query)
+            await checkIfRowExists(query)
           }
           const result = await processAnswers()
           res.status(200).json(result);
