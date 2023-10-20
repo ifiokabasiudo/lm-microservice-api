@@ -289,12 +289,12 @@ app.post("/api/api", async (req, res) => {
   }
 
   const processAnswers = async () => {
-    try {
-      function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-      }
+    // try {
+    //   function delay(ms) {
+    //     return new Promise(resolve => setTimeout(resolve, ms));
+    //   }
   
-        const result = delay(7000).then(async () => {
+    //     const result = delay(7000).then(async () => {
         try {
           const history = await getChatHistory()
           console.log("This is the history: " + history)
@@ -335,15 +335,15 @@ app.post("/api/api", async (req, res) => {
             deleteLastQuestion()
           }
         }
-      })
-      return result
-    } catch (err) {
-      console.log(err)
-      const history = await getChatHistory()
-      if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
-        deleteLastQuestion()
-      }
-    }    
+      // })
+      // return result
+    // } catch (err) {
+    //   console.log(err)
+    //   const history = await getChatHistory()
+    //   if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
+    //     deleteLastQuestion()
+    //   }
+    // }    
   }
 
   function calculateDotProductSimilarity(vector1, vector2) {
