@@ -329,6 +329,7 @@ app.post("/api/api", async (req, res) => {
             return result  
         } catch (err) {
           console.log(err)
+          res.json(400).send("There was an error sending your query: " + err)
           const history = await getChatHistory()
           if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
             deleteLastQuestion()
