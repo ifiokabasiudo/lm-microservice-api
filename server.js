@@ -305,8 +305,8 @@ app.post("/api/api", async (req, res) => {
 
           // Use a conditional statement to slice the array
           const lastElements = history.length > elementsToRemember
-            ? originalArray.slice(-elementsToRemember)
-            : originalArray;
+            ? history.slice(-elementsToRemember)
+            : history;
 
           // Log the last elements
           console.log("These are the last elements" + lastElements);
