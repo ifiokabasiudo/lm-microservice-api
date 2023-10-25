@@ -315,7 +315,7 @@ app.post("/api/api", async (req, res) => {
             const chatResponse = chatCompletion.choices[0].message.content
 
             if(history[history.length-1].role === "user"){
-              upsertAssistant(chatResponse)
+              await upsertAssistant(chatResponse)
             }
             else{
               console.log("This was the error")
