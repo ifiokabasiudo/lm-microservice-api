@@ -138,14 +138,13 @@ app.post("/api/api", async (req, res) => {
   }
 
   const getChatHistory = async () => {
-    try{
       const condition = { column_value: userId }; // Replace with your own condition
 
-      function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-      }
+      // function delay(ms) {
+      //   return new Promise(resolve => setTimeout(resolve, ms));
+      // }
   
-      const data = await delay(5000).then(async () => {
+      // const data = await delay(5000).then(async () => {
         try {
           const { data, error } = await supabase
           .from('chats')
@@ -159,20 +158,12 @@ app.post("/api/api", async (req, res) => {
           return data[0].chats;
         }
         } catch (err) {
-         console.log(err) 
-         const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
-            deleteLastQuestion()
-          }
+         console.log(err)
         }
-      });
+      // });
     
       return data;
-    }catch(err){
-      console.log(err)
-    }    
-  }
-
+      }
   const createUser = async (finalPrompt) => {
     try{
       const { data, error } = await supabase
@@ -274,13 +265,13 @@ app.post("/api/api", async (req, res) => {
         const history = await getChatHistory()
 
           if(history[history.length-1].role === "assistant"){
-            upsertUser(finalPrompt)
+            await upsertUser(finalPrompt)
           }
           else{
             res.json(400).send("There was an error sending your query")
           }
       } else {
-        createUser(finalPrompt)
+        await createUser(finalPrompt)
       }
     }catch(err){
       console.log(err)
@@ -342,10 +333,6 @@ app.post("/api/api", async (req, res) => {
         } catch (err) {
           console.log(err)
           res.json(400).send("There was an error sending your query: " + err)
-          const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
-            deleteLastQuestion()
-          }
         }
       // })
       // return result
@@ -423,10 +410,6 @@ app.post("/api/api", async (req, res) => {
   
           res.status(200).json(result);
         } catch (error) {
-          const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
-            deleteLastQuestion()
-          }
           if (error.response) {
             console.error(error.response.status, error.response.data);
             res.status(error.response.status).json(error.response.data);
@@ -445,10 +428,6 @@ app.post("/api/api", async (req, res) => {
   
           res.status(200).json(result);
         } catch (error) {
-          const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
-            deleteLastQuestion()
-          }
           if (error.response) {
             console.error(error.response.status, error.response.data);
             res.status(error.response.status).json(error.response.data);
@@ -470,11 +449,6 @@ app.post("/api/api", async (req, res) => {
           const result = await processAnswers()
           res.status(200).json(result);
         } catch (error) {
-          const history = await getChatHistory()
-          if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
-            deleteLastQuestion()
-          }
-
           if (error.response) {
             console.error(error.response.status, error.response.data);
             res.status(error.response.status).json(error.response.data);
@@ -488,10 +462,6 @@ app.post("/api/api", async (req, res) => {
       }
     } catch (err) {
       console.log(err)
-      const history = await getChatHistory()
-      if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
-        deleteLastQuestion()
-      }
     }    
   }
 
