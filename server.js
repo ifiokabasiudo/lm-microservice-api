@@ -291,16 +291,12 @@ app.post("/api/api", async (req, res) => {
           console.log("This is the history: " + history)
 
           // Define the number of elements to log (e.g., 20)
-          const elementsToRemember = 7;
+          const elementsToRemember = 11;
 
           // Use a conditional statement to slice the array
           const lastElements = history.length > elementsToRemember
             ? history.slice(-elementsToRemember)
-            : history;
-
-          // Log the last elements
-          console.log("These are the last elements" + lastElements);
-    
+            : history;    
           
             const chatCompletion = await openai.chat.completions.create({
               messages: lastElements,
