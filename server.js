@@ -292,7 +292,7 @@ app.post("/api/api", async (req, res) => {
           console.log("This is the history: " + JSON.stringify(history))
 
           // Define the number of elements to log (e.g., 20)
-          const elementsToRemember = 21;
+          const elementsToRemember = 7;
 
           // Use a conditional statement to slice the array
           const lastElements = history.length > elementsToRemember
@@ -398,7 +398,7 @@ app.post("/api/api", async (req, res) => {
         if(retryQuery === undefined){
           const finalPrompt = `
               Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
-              Question: ${query}.
+              Question://--${query}--//.
               Answer:
             `;
   
