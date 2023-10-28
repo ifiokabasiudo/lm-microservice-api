@@ -289,7 +289,6 @@ app.post("/api/api", async (req, res) => {
         try {
           const history = await getChatHistory()
           console.log("This is the history: " + history)
-          console.log("This is the history: " + JSON.stringify(history))
 
           // Define the number of elements to log (e.g., 20)
           const elementsToRemember = 7;
