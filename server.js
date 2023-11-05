@@ -49,8 +49,6 @@ app.post("/api/api", async (req, res) => {
     //   .from("pdfFiles")
     //   .download(`${userId}/${nameOfFile}`);
 
-  console.log("extracted: ", JSON.stringify(pdfData));
-
   if (pdfData !== null || error) {
     console.log("length of file: ", pdfData.length);
   }
@@ -72,7 +70,7 @@ app.post("/api/api", async (req, res) => {
   
       xq = queryEmbedding.data[0].embedding;
     
-      console.log("embedding: " + xq);     
+      console.log("embedding success");     
     } catch (error) {
       console.log(error)
     }
@@ -85,17 +83,14 @@ app.post("/api/api", async (req, res) => {
     }
 
     try{
-      console.log("It got here: "+ query)
-
       const queryEmbedding = await openai.embeddings.create({
         model: EMBEDDING_MODEL,
         input: query,
       });
-      console.log("openai point:", query);
     
       xq = queryEmbedding.data[0].embedding;
     
-      console.log("embedding: " + xq);
+      console.log("embedding success");
     }catch(err){
       console.log(err)
     }
@@ -154,7 +149,7 @@ app.post("/api/api", async (req, res) => {
         if (error) {
           console.log(error);
         } else {
-          console.log("This is the get chat history: " + JSON.stringify(data[0].chats));
+          console.log("Get chat history success");
           return data[0].chats;
         }
         } catch (err) {
@@ -162,7 +157,7 @@ app.post("/api/api", async (req, res) => {
         }
       // });
     
-      return data;
+      // return data;
       }
   const createUser = async (finalPrompt) => {
     try{
@@ -171,7 +166,7 @@ app.post("/api/api", async (req, res) => {
       .insert([{ user_id: userId,  chats: [{role: 'user', content: finalPrompt}]}])
       .select()
   
-      console.log(data)
+      console.log("Create user success")
     }catch(err){
       console.log(err)
     }
@@ -203,7 +198,7 @@ app.post("/api/api", async (req, res) => {
             console.log(updateError)
           } else {
             // Handle the successful update.
-            console.log(updatedData)
+            console.log("Update assistant success")
           }
           } catch (err) {
             console.log(err)
@@ -240,7 +235,7 @@ app.post("/api/api", async (req, res) => {
             console.log(updateError)
           } else {
             // Handle the successful update.
-            console.log(updatedData)
+            console.log("Update user success")
           }
           } catch (err) {
             console.log(err)
@@ -288,7 +283,7 @@ app.post("/api/api", async (req, res) => {
     //     const result = delay(7000).then(async () => {
         try {
           const history = await getChatHistory()
-          console.log("This is the history: " + history)
+          console.log("Start process answers success")
 
           // Define the number of elements to log (e.g., 20)
           const elementsToRemember = 11;
@@ -304,8 +299,7 @@ app.post("/api/api", async (req, res) => {
               max_tokens: 2048,
             });
           
-            console.log("Chat completion: " + chatCompletion);
-            console.log("Chat completion.choices: " + chatCompletion.choices);
+            console.log("Chat completion success");
             
             const chatResponse = chatCompletion.choices[0].message.content
 
@@ -387,9 +381,8 @@ app.post("/api/api", async (req, res) => {
   
         const plainText = inputText.replace(/[+\n]/g, "");
   
-        console.log(plainText);
-  
-        console.log("Query Info:", plainText);
+        console.log("Highest similarity info chosen");
+
         if(retryQuery === undefined){
           const finalPrompt = `
               Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
@@ -401,7 +394,7 @@ app.post("/api/api", async (req, res) => {
              await checkIfRowExists(finalPrompt)
           const result = await processAnswers()
           
-          console.log("Funny how this will work: " + JSON.stringify(result));
+          console.log("All processes have been completed successfully");
   
           res.status(200).json(result);
         } catch (error) {
@@ -419,7 +412,7 @@ app.post("/api/api", async (req, res) => {
         try {
           const result = await processAnswers()
           
-          console.log("Funny how this will work: " + JSON.stringify(result));
+          console.log("All processes have been completed successfully");
   
           res.status(200).json(result);
         } catch (error) {
@@ -442,6 +435,9 @@ app.post("/api/api", async (req, res) => {
             await checkIfRowExists(query)
           }
           const result = await processAnswers()
+
+          console.log("All processes have been completed successfully");
+
           res.status(200).json(result);
         } catch (error) {
           if (error.response) {
