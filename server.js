@@ -286,7 +286,7 @@ app.post("/api/api", async (req, res) => {
           console.log("Start process answers success")
 
           // Define the number of elements to log (e.g., 20)
-          const elementsToRemember = 11;
+          const elementsToRemember = 7;
 
           // Use a conditional statement to slice the array
           const lastElements = history.length > elementsToRemember
@@ -295,11 +295,11 @@ app.post("/api/api", async (req, res) => {
           
             const chatCompletion = await openai.chat.completions.create({
               messages: lastElements,
-              model: 'gpt-3.5-turbo',
+              model: 'gpt-3.5-turbo-1106',
               max_tokens: 2048,
             });
           
-            console.log("Chat completion success");
+            console.log("Chat completion success: " + chatCompletion);
             
             const chatResponse = chatCompletion.choices[0].message.content
 
