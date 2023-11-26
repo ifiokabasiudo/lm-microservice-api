@@ -260,13 +260,13 @@ app.post("/api/api", async (req, res) => {
         const history = await getChatHistory()
 
           if(history[history.length-1].role === "assistant"){
-            await upsertUser(finalPrompt + " After responding with an answer, give 3 suggestions for more questions the user can ask")
+            await upsertUser(finalPrompt + "--//After responding with an answer, give 3 suggestions for more questions the user can ask")
           }
           else{
             res.json(400).send("There was an error sending your query")
           }
       } else {
-        await createUser(finalPrompt + " After responding with an answer, give 3 suggestions for more questions the user can ask")
+        await createUser(finalPrompt + "--//After responding with an answer, give 3 suggestions for more questions the user can ask")
       }
     }catch(err){
       console.log(err)
