@@ -373,8 +373,31 @@ app.post("/api/api", async (req, res) => {
         // Select the top 5 pages
         const top5SimilarPages = similarityScores.slice(0, 5);
         console.log(top5SimilarPages);
+
+        if(top5SimilarPages[0].similarity < 7.5) {
+          console.log("Highest similarity score was less than 7.5")
+          try {
+            if(retryQuery === undefined){
+              await checkIfRowExists(query)
+            }
+            const result = await processAnswers()
   
-        // To get the results
+            console.log("All processes have been completed successfully");
+  
+            res.status(200).json(result);
+          } catch (error) {
+            if (error.response) {
+              console.error(error.response.status, error.response.data);
+              res.status(error.response.status).json(error.response.data);
+            } else {
+              console.error(`Error with request: ${error.message}`);
+              res
+                .status(500)
+                .json({ error: "An error occurred during your request." });
+            }
+          }
+        } else {
+          // To get the results
   
         const mostSimilar = top5SimilarPages[0].pageData.page_text;
         const inputText = mostSimilar;
@@ -426,7 +449,10 @@ app.post("/api/api", async (req, res) => {
               .json({ error: "An error occurred during your request." });
           }
         }
-        }        
+        }
+        }
+  
+                
       } else {
         // Handle the case where there are no similarity scores
         console.log("No similarity scores found.");
