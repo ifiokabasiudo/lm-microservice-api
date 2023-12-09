@@ -184,7 +184,7 @@ app.post("/api/api", async (req, res) => {
 
         let updatedArray
 
-        console.log("This is the current array role. It should not be assistant: " + currentArray[currentArray.length - 1].role)
+        console.log("This is the previous array role before upserting assistant. It should be user: " + currentArray[currentArray.length - 1].role)
 
         if (currentArray.length > 0 && currentArray[currentArray.length - 1].role === 'assistant') {
           // Update the existing assistant's response
@@ -230,9 +230,20 @@ app.post("/api/api", async (req, res) => {
   
       if (rowData && rowData.length > 0) {
         const currentArray = rowData[0].chats;
-        const newValue = {role: 'user', content: finalPrompt};
-        
-        const updatedArray = [...currentArray, newValue];           
+
+        let updatedArray
+
+        console.log("This is the previous array role before upserting user. It should be assistant: " + currentArray[currentArray.length - 1].role)
+
+        if (currentArray.length > 0 && currentArray[currentArray.length - 1].role === 'user') {
+          // Update the existing assistant's response
+          updatedArray = currentArray; 
+        } else {
+          // Add a new entry for the assistant's response
+          const newValue = {role: 'user', content: finalPrompt};
+          updatedArray = [...currentArray, newValue]; 
+        }
+          
         // You can also perform other modifications as needed.
         if (updatedArray) {
           try {
@@ -269,6 +280,8 @@ app.post("/api/api", async (req, res) => {
   
       if (data && data.length > 0) {
         const history = await getChatHistory()
+
+          console.log("This is the history for check if row exists. It should be assistant: " + history[history.length-1].role)
 
           if(history[history.length-1].role === "assistant"){
             await upsertUser(finalPrompt + "--//After responding with an answer, give 3 suggestions for more questions the user can ask")
