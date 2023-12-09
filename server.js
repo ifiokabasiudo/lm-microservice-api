@@ -181,9 +181,20 @@ app.post("/api/api", async (req, res) => {
   
       if (rowData && rowData.length > 0) {
         const currentArray = rowData[0].chats;
-        const newValue = {role: 'assistant', content: response};
-        
-        const updatedArray = [...currentArray, newValue];           
+
+        let updatedArray
+
+        console.log("This is the current array role. It should not be assistant: " + currentArray[currentArray.length - 1].role)
+
+        if (currentArray.length > 0 && currentArray[currentArray.length - 1].role === 'assistant') {
+          // Update the existing assistant's response
+          updatedArray = currentArray; 
+        } else {
+          // Add a new entry for the assistant's response
+          const newValue = {role: 'assistant', content: response};
+          updatedArray = [...currentArray, newValue];
+        }
+           
         // You can also perform other modifications as needed.
   
         if (updatedArray) {
@@ -302,6 +313,8 @@ app.post("/api/api", async (req, res) => {
             console.log("Chat completion success: " + chatCompletion);
             
             const chatResponse = chatCompletion.choices[0].message.content
+
+            console.log("This is the history last role. It should be user: " + history[history.length-1].role)
 
             if(history[history.length-1].role === "user"){
               await upsertAssistant(chatResponse)
