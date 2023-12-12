@@ -142,7 +142,8 @@ app.post("/api/api", async (req, res) => {
         const { data, error } = await supabase
           .from("chats")
           .select()
-          .eq("user_id", condition.column_value);
+          .eq("user_id", condition.column_value)
+          .eq("pdf_name", nameOfFile)
 
         if (error) {
           console.log(error);
@@ -165,6 +166,7 @@ app.post("/api/api", async (req, res) => {
             {
               user_id: userId,
               chats: [{ role: "user", content: finalPrompt }],
+              pdf_name : nameOfFile
             },
           ])
           .select();
@@ -180,7 +182,9 @@ app.post("/api/api", async (req, res) => {
         const { data: rowData, error } = await supabase
           .from("chats")
           .select("chats")
-          .eq("user_id", userId);
+          .eq("user_id", userId)
+          .eq("pdf_name", nameOfFile)
+
 
         if (rowData && rowData.length > 0) {
           const currentArray = rowData[0].chats;
@@ -235,7 +239,8 @@ app.post("/api/api", async (req, res) => {
         const { data: rowData, error } = await supabase
           .from("chats")
           .select("chats")
-          .eq("user_id", userId);
+          .eq("user_id", userId)
+          .eq("pdf_name", nameOfFile)
 
         if (rowData && rowData.length > 0) {
           const currentArray = rowData[0].chats;
@@ -291,7 +296,8 @@ app.post("/api/api", async (req, res) => {
         const { data, error } = await supabase
           .from("chats")
           .select()
-          .eq("user_id", condition.column_value);
+          .eq("user_id", condition.column_value)
+          .eq("pdf_name", nameOfFile)
 
         if (data && data.length > 0) {
           const history = await getChatHistory();
@@ -471,7 +477,7 @@ app.post("/api/api", async (req, res) => {
             //   Answer:
             // `;
 
-              const finalPrompt = instructions + `\n """${plainText}"""` + `\n Question://--${query}--//`
+              const finalPrompt = instructions + `\n """${plainText}"""` + ` \nQuestion://--${query}--//`
 
               try {
                 await checkIfRowExists(finalPrompt);
