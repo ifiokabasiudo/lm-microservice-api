@@ -1,6 +1,6 @@
 const express = require("express");
 const axios = require("axios"); // You may need to install axios if not already installed
-const { OpenAI } = require('openai');
+const { OpenAI } = require("openai");
 const { createClient } = require("@supabase/supabase-js");
 const cors = require("cors");
 require("dotenv").config();
@@ -32,384 +32,496 @@ app.use(express.json()); // Parse JSON requests
 
 app.post("/api/api", async (req, res) => {
   try {
-  const json = req.body;
-  const nameOfFile = json.nameOfFile; // Replace with your logic to get the file name
-  const userId = json.userId;
-  const retryQuery = json.retryQuery;
-  const query = json.query || "";
-  console.log("This is the json: ", nameOfFile);
+    const json = req.body;
+    const nameOfFile = json.nameOfFile; // Replace with your logic to get the file name
+    const userId = json.userId;
+    const retryQuery = json.retryQuery;
+    const query = json.query || "";
+    console.log("This is the json: ", nameOfFile);
 
-  const { data: pdfData } = await supabase
-    .from("pdfs")
-    .select("*")
-    .eq("pdf_name", nameOfFile)
-    .eq("user_id", userId);
+    const { data: pdfData } = await supabase
+      .from("pdfs")
+      .select("*")
+      .eq("pdf_name", nameOfFile)
+      .eq("user_id", userId);
 
     // const { data: pdfData, error } = await supabase.storage
     //   .from("pdfFiles")
     //   .download(`${userId}/${nameOfFile}`);
 
-  if (pdfData !== null || error) {
-    console.log("length of file: ", pdfData.length);
-  }
-
-  if (!openai.apiKey) {
-    console.error("OpenAI API key not properly configured");
-    res.status(500).json({ error: "OpenAI API key not properly configured" });
-    return;
-  }
-
-  let xq
-
-  if(retryQuery !== undefined){
-    try {
-      const queryEmbedding = await openai.embeddings.create({
-        model: EMBEDDING_MODEL,
-        input: retryQuery[retryQuery.length-1].content,
-      });
-  
-      xq = queryEmbedding.data[0].embedding;
-    
-      console.log("embedding success");     
-    } catch (error) {
-      console.log(error)
+    if (pdfData !== null || error) {
+      console.log("length of file: ", pdfData.length);
     }
 
-  }else{
-    if (query.trim().length === 0) {
-      console.error("Please enter a question");
-      res.status(500).json({ error: "Please enter a question" });
+    if (!openai.apiKey) {
+      console.error("OpenAI API key not properly configured");
+      res.status(500).json({ error: "OpenAI API key not properly configured" });
       return;
     }
 
-    try{
-      const queryEmbedding = await openai.embeddings.create({
-        model: EMBEDDING_MODEL,
-        input: query,
-      });
-    
-      xq = queryEmbedding.data[0].embedding;
-    
-      console.log("embedding success");
-    }catch(err){
-      console.log(err)
-    }
-  }
-  
+    let xq;
 
-  const deleteLastQuestion = async () => {
-    try{
-      const { data: rowData, error } = await supabase
-      .from('chats')
-      .select('chats')
-      .eq('user_id', userId);
-  
-      if (rowData && rowData.length > 0) {
-        const newArray = rowData[0].chats;
-        const revertedArray = newArray.pop();
-  
-        if (revertedArray) {
-          try {
-            const { data: revertedData, error: revertError } = await supabase
-            .from('chats')
-            .update({ chats: revertedArray })
-            .eq('user_id', userId);
-        
-          if (revertError) {
-            // Handle the update error.
-            console.log(revertError)
-          } else {
-            // Handle the successful update.
-            console.log(revertedData)
-          }          
-          } catch (err) {
-            console.log(err)
+    if (retryQuery !== undefined) {
+      try {
+        const queryEmbedding = await openai.embeddings.create({
+          model: EMBEDDING_MODEL,
+          input: retryQuery[retryQuery.length - 1].content,
+        });
+
+        xq = queryEmbedding.data[0].embedding;
+
+        console.log("embedding success");
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      if (query.trim().length === 0) {
+        console.error("Please enter a question");
+        res.status(500).json({ error: "Please enter a question" });
+        return;
+      }
+
+      try {
+        const queryEmbedding = await openai.embeddings.create({
+          model: EMBEDDING_MODEL,
+          input: query,
+        });
+
+        xq = queryEmbedding.data[0].embedding;
+
+        console.log("embedding success");
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    const deleteLastQuestion = async () => {
+      try {
+        const { data: rowData, error } = await supabase
+          .from("chats")
+          .select("chats")
+          .eq("user_id", userId);
+
+        if (rowData && rowData.length > 0) {
+          const newArray = rowData[0].chats;
+          const revertedArray = newArray.pop();
+
+          if (revertedArray) {
+            try {
+              const { data: revertedData, error: revertError } = await supabase
+                .from("chats")
+                .update({ chats: revertedArray })
+                .eq("user_id", userId);
+
+              if (revertError) {
+                // Handle the update error.
+                console.log(revertError);
+              } else {
+                // Handle the successful update.
+                console.log(revertedData);
+              }
+            } catch (err) {
+              console.log(err);
+            }
           }
         }
+      } catch (err) {
+        console.log(err);
       }
-    }catch(err){
-      console.log(err)
-    }    
-  }
+    };
 
-  const getChatHistory = async () => {
+    const getChatHistory = async () => {
       const condition = { column_value: userId }; // Replace with your own condition
 
       // function delay(ms) {
       //   return new Promise(resolve => setTimeout(resolve, ms));
       // }
-  
+
       // const data = await delay(5000).then(async () => {
-        try {
-          const { data, error } = await supabase
-          .from('chats')
+      try {
+        const { data, error } = await supabase
+          .from("chats")
           .select()
-          .eq('user_id', condition.column_value);
-    
+          .eq("user_id", condition.column_value);
+
         if (error) {
           console.log(error);
         } else {
           console.log("Get chat history success");
           return data[0].chats;
         }
-        } catch (err) {
-         console.log(err)
-        }
+      } catch (err) {
+        console.log(err);
+      }
       // });
-    
+
       // return data;
+    };
+    const createUser = async (finalPrompt) => {
+      try {
+        const { data, error } = await supabase
+          .from("chats")
+          .insert([
+            {
+              user_id: userId,
+              chats: [{ role: "user", content: finalPrompt }],
+            },
+          ])
+          .select();
+
+        console.log("Create user success");
+      } catch (err) {
+        console.log(err);
       }
-  const createUser = async (finalPrompt) => {
-    try{
-      const { data, error } = await supabase
-      .from('chats')
-      .insert([{ user_id: userId,  chats: [{role: 'user', content: finalPrompt}]}])
-      .select()
-  
-      console.log("Create user success")
-    }catch(err){
-      console.log(err)
-    }
-  }
+    };
 
-  const upsertAssistant = async (response) => {
-    try{
-      const { data: rowData, error } = await supabase
-      .from('chats')
-      .select('chats')
-      .eq('user_id', userId);
-  
-      if (rowData && rowData.length > 0) {
-        const currentArray = rowData[0].chats;
+    const upsertAssistant = async (response) => {
+      try {
+        const { data: rowData, error } = await supabase
+          .from("chats")
+          .select("chats")
+          .eq("user_id", userId);
 
-        let updatedArray
+        if (rowData && rowData.length > 0) {
+          const currentArray = rowData[0].chats;
 
-        console.log("This is the previous array role before upserting assistant. It should be user: " + currentArray[currentArray.length - 1].role)
+          let updatedArray;
 
-        if (currentArray.length > 0 && currentArray[currentArray.length - 1].role === 'assistant') {
-          // Update the existing assistant's response
-          updatedArray = currentArray; 
-        } else {
-          // Add a new entry for the assistant's response
-          const newValue = {role: 'assistant', content: response};
-          updatedArray = [...currentArray, newValue];
-        }
-           
-        // You can also perform other modifications as needed.
-  
-        if (updatedArray) {
-          try {
-            const { data: updatedData, error: updateError } = await supabase
-            .from('chats')
-            .update({ chats: updatedArray })
-            .eq('user_id', userId);
-        
-          if (updateError) {
-            // Handle the update error.
-            console.log(updateError)
+          console.log(
+            "This is the previous array role before upserting assistant. It should be user: " +
+              currentArray[currentArray.length - 1].role
+          );
+
+          if (
+            currentArray.length > 0 &&
+            currentArray[currentArray.length - 1].role === "assistant"
+          ) {
+            // Update the existing assistant's response
+            updatedArray = currentArray;
           } else {
-            // Handle the successful update.
-            console.log("Update assistant success")
+            // Add a new entry for the assistant's response
+            const newValue = { role: "assistant", content: response };
+            updatedArray = [...currentArray, newValue];
           }
-          } catch (err) {
-            console.log(err)
+
+          // You can also perform other modifications as needed.
+
+          if (updatedArray) {
+            try {
+              const { data: updatedData, error: updateError } = await supabase
+                .from("chats")
+                .update({ chats: updatedArray })
+                .eq("user_id", userId);
+
+              if (updateError) {
+                // Handle the update error.
+                console.log(updateError);
+              } else {
+                // Handle the successful update.
+                console.log("Update assistant success");
+              }
+            } catch (err) {
+              console.log(err);
+            }
           }
         }
+      } catch (err) {
+        console.log(err);
       }
-    }catch(err) {
-      console.log(err)
-    }
-  }
+    };
 
-  const upsertUser = async (finalPrompt) => {
-    try{
-      const { data: rowData, error } = await supabase
-      .from('chats')
-      .select('chats')
-      .eq('user_id', userId);
-  
-      if (rowData && rowData.length > 0) {
-        const currentArray = rowData[0].chats;
+    const upsertUser = async (finalPrompt) => {
+      try {
+        const { data: rowData, error } = await supabase
+          .from("chats")
+          .select("chats")
+          .eq("user_id", userId);
 
-        let updatedArray
+        if (rowData && rowData.length > 0) {
+          const currentArray = rowData[0].chats;
 
-        console.log("This is the previous array role before upserting user. It should be assistant: " + currentArray[currentArray.length - 1].role)
+          let updatedArray;
 
-        if (currentArray.length > 0 && currentArray[currentArray.length - 1].role === 'user') {
-          // Update the existing assistant's response
-          updatedArray = currentArray; 
-        } else {
-          // Add a new entry for the assistant's response
-          const newValue = {role: 'user', content: finalPrompt};
-          updatedArray = [...currentArray, newValue]; 
-        }
-          
-        // You can also perform other modifications as needed.
-        if (updatedArray) {
-          try {
-            const { data: updatedData, error: updateError } = await supabase
-            .from('chats')
-            .update({ chats: updatedArray })
-            .eq('user_id', userId);
-        
-          if (updateError) {
-            // Handle the update error.
-            console.log(updateError)
+          console.log(
+            "This is the previous array role before upserting user. It should be assistant: " +
+              currentArray[currentArray.length - 1].role
+          );
+
+          if (
+            currentArray.length > 0 &&
+            currentArray[currentArray.length - 1].role === "user"
+          ) {
+            // Update the existing assistant's response
+            updatedArray = currentArray;
           } else {
-            // Handle the successful update.
-            console.log("Update user success")
+            // Add a new entry for the assistant's response
+            const newValue = { role: "user", content: finalPrompt };
+            updatedArray = [...currentArray, newValue];
           }
-          } catch (err) {
-            console.log(err)
+
+          // You can also perform other modifications as needed.
+          if (updatedArray) {
+            try {
+              const { data: updatedData, error: updateError } = await supabase
+                .from("chats")
+                .update({ chats: updatedArray })
+                .eq("user_id", userId);
+
+              if (updateError) {
+                // Handle the update error.
+                console.log(updateError);
+              } else {
+                // Handle the successful update.
+                console.log("Update user success");
+              }
+            } catch (err) {
+              console.log(err);
+            }
           }
         }
+      } catch (err) {
+        console.log(err);
       }
-    }catch(err){
-      console.log(err)
-    }    
-  }
+    };
 
-  const checkIfRowExists = async (finalPrompt) => {
-    try{
-      const condition = { column_value: userId }; // Replace with your own condition
+    const checkIfRowExists = async (finalPrompt) => {
+      try {
+        const condition = { column_value: userId }; // Replace with your own condition
 
-      const { data, error } = await supabase
-      .from('chats')
-      .select()
-      .eq('user_id', condition.column_value);
-  
-      if (data && data.length > 0) {
-        const history = await getChatHistory()
+        const { data, error } = await supabase
+          .from("chats")
+          .select()
+          .eq("user_id", condition.column_value);
 
-          console.log("This is the history for check if row exists. It should be assistant: " + history[history.length-1].role)
+        if (data && data.length > 0) {
+          const history = await getChatHistory();
 
-          if(history[history.length-1].role === "assistant"){
-            await upsertUser(finalPrompt + "--//After responding with an answer, give 3 suggestions for more questions the user can ask")
+          console.log(
+            "This is the history for check if row exists. It should be assistant: " +
+              history[history.length - 1].role
+          );
+
+          if (history[history.length - 1].role === "assistant") {
+            await upsertUser(
+              finalPrompt +
+                "--//After responding with an answer, give 3 suggestions for more questions the user can ask"
+            );
+          } else {
+            res.json(400).send("There was an error sending your query");
           }
-          else{
-            res.json(400).send("There was an error sending your query")
-          }
-      } else {
-        await createUser(finalPrompt + "--//After responding with an answer, give 3 suggestions for more questions the user can ask")
+        } else {
+          await createUser(
+            finalPrompt +
+              "--//After responding with an answer, give 3 suggestions for more questions the user can ask"
+          );
+        }
+      } catch (err) {
+        console.log(err);
       }
-    }catch(err){
-      console.log(err)
-    }
-    
-  }
+    };
 
-  const processAnswers = async () => {
-    // try {
-    //   function delay(ms) {
-    //     return new Promise(resolve => setTimeout(resolve, ms));
-    //   }
-  
-    //     const result = delay(7000).then(async () => {
-        try {
-          const history = await getChatHistory()
-          console.log("Start process answers success")
+    const processAnswers = async () => {
+      // try {
+      //   function delay(ms) {
+      //     return new Promise(resolve => setTimeout(resolve, ms));
+      //   }
 
-          // Define the number of elements to log (e.g., 20)
-          const elementsToRemember = 7;
+      //     const result = delay(7000).then(async () => {
+      try {
+        const history = await getChatHistory();
+        console.log("Start process answers success");
 
-          // Use a conditional statement to slice the array
-          const lastElements = history.length > elementsToRemember
+        // Define the number of elements to log (e.g., 20)
+        const elementsToRemember = 7;
+
+        // Use a conditional statement to slice the array
+        const lastElements =
+          history.length > elementsToRemember
             ? history.slice(-elementsToRemember)
-            : history;    
-          
-            const chatCompletion = await openai.chat.completions.create({
-              messages: lastElements,
-              model: 'gpt-3.5-turbo-1106',
-              max_tokens: 2048,
-            });
-          
-            console.log("Chat completion success: " + chatCompletion);
-            
-            const chatResponse = chatCompletion.choices[0].message.content
+            : history;
 
-            console.log("This is the history last role. It should be user: " + history[history.length-1].role)
+        const chatCompletion = await openai.chat.completions.create({
+          messages: lastElements,
+          model: "gpt-3.5-turbo-1106",
+          max_tokens: 2048,
+        });
 
-            if(history[history.length-1].role === "user"){
-              await upsertAssistant(chatResponse)
-            }
-            else{
-              console.log("This was the error")
-              res.json(400).send("There was an error sending your query")
-            }
-            
-            const history2 = await getChatHistory()
-    
-            const result= {
-              query: history2,
-              completion: chatResponse
-            }
-    
-            return result  
-        } catch (err) {
-          console.log(err)
-          res.json(400).send("There was an error sending your query: " + err)
+        console.log("Chat completion success: " + chatCompletion);
+
+        const chatResponse = chatCompletion.choices[0].message.content;
+
+        console.log(
+          "This is the history last role. It should be user: " +
+            history[history.length - 1].role
+        );
+
+        if (history[history.length - 1].role === "user") {
+          await upsertAssistant(chatResponse);
+        } else {
+          console.log("This was the error");
+          res.json(400).send("There was an error sending your query");
         }
+
+        const history2 = await getChatHistory();
+
+        const result = {
+          query: history2,
+          completion: chatResponse,
+        };
+
+        return result;
+      } catch (err) {
+        console.log(err);
+        res.json(400).send("There was an error sending your query: " + err);
+      }
       // })
       // return result
-    // } catch (err) {
-    //   console.log(err)
-    //   const history = await getChatHistory()
-    //   if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
-    //     deleteLastQuestion()
-    //   }
-    // }    
-  }
+      // } catch (err) {
+      //   console.log(err)
+      //   const history = await getChatHistory()
+      //   if(history.length % 2 !== 0 && history.length !== 0 && history[history.length-1].role === "user"){
+      //     deleteLastQuestion()
+      //   }
+      // }
+    };
 
-  function calculateDotProductSimilarity(vector1, vector2) {
-    try {
-      if (vector1.length !== vector2.length) {
-        throw new Error("Vector dimensions do not match");
+    function calculateDotProductSimilarity(vector1, vector2) {
+      try {
+        if (vector1.length !== vector2.length) {
+          throw new Error("Vector dimensions do not match");
+        }
+
+        let dotProduct = 0;
+        for (let i = 0; i < vector1.length; i++) {
+          dotProduct += vector1[i] * vector2[i];
+        }
+        return dotProduct;
+      } catch (err) {
+        console.log(err);
       }
-  
-      let dotProduct = 0;
-      for (let i = 0; i < vector1.length; i++) {
-        dotProduct += vector1[i] * vector2[i];
-      }
-      return dotProduct;
-    } catch (err) {
-      console.log(err)
     }
-  }
 
-  async function calculateSimilarityScores(userQueryEmbedding, pdfData) {
-    try {
-      const similarityScores = [];
-      pdfData.forEach((row) => {
-        const pageEmbedding = row.vector_data;
-        const similarity = calculateDotProductSimilarity(
-          userQueryEmbedding,
-          pageEmbedding
-        );
-  
-        similarityScores.push({
-          pageData: row,
-          similarity: similarity,
+    async function calculateSimilarityScores(userQueryEmbedding, pdfData) {
+      try {
+        const similarityScores = [];
+        pdfData.forEach((row) => {
+          const pageEmbedding = row.vector_data;
+          const similarity = calculateDotProductSimilarity(
+            userQueryEmbedding,
+            pageEmbedding
+          );
+
+          similarityScores.push({
+            pageData: row,
+            similarity: similarity,
+          });
         });
-      });
-  
-      // Sort by similarity in descending order
-      similarityScores.sort((a, b) => b.similarity - a.similarity);
-  
-      if (similarityScores.length > 0) {
-        // Select the top 5 pages
-        const top5SimilarPages = similarityScores.slice(0, 5);
-        console.log(top5SimilarPages);
 
-        if(top5SimilarPages[0].similarity < 0.75) {
-          console.log("Highest similarity score was less than 0.75")
-          try {
-            if(retryQuery === undefined){
-              await checkIfRowExists(query)
+        // Sort by similarity in descending order
+        similarityScores.sort((a, b) => b.similarity - a.similarity);
+
+        if (similarityScores.length > 0) {
+          // Select the top 5 pages
+          const top5SimilarPages = similarityScores.slice(0, 5);
+          console.log(top5SimilarPages);
+
+          if (top5SimilarPages[0].similarity < 0.75) {
+            console.log("Highest similarity score was less than 0.75");
+            try {
+              if (retryQuery === undefined) {
+                await checkIfRowExists(query);
+              }
+              const result = await processAnswers();
+
+              console.log("All processes have been completed successfully");
+
+              res.status(200).json(result);
+            } catch (error) {
+              if (error.response) {
+                console.error(error.response.status, error.response.data);
+                res.status(error.response.status).json(error.response.data);
+              } else {
+                console.error(`Error with request: ${error.message}`);
+                res
+                  .status(500)
+                  .json({ error: "An error occurred during your request." });
+              }
             }
-            const result = await processAnswers()
-  
+          } else {
+            // To get the results
+
+            const mostSimilar = top5SimilarPages[0].pageData.page_text;
+            const inputText = mostSimilar;
+
+            const plainText = inputText.replace(/[+\n]/g, "");
+
+            console.log("Highest similarity info chosen");
+
+            if (retryQuery === undefined) {
+              const instructions =
+                "You will be provided with information from a document called " +
+                top5SimilarPages[0].pageData.pdf_name +
+                " from page " +
+                String(top5SimilarPages[0].pageData.page_number) +
+                ' delimited by tripple quotes and a question. Your task is to answer the question using only the provided document and to cite passages of the document used to anser the question. If an answer to a question is provided, it must be annotated with a citation. Use the following format for citing relevant passages ({"citation":...})';
+
+            //   const finalPrompt = `
+            //   Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
+            //   Question://--${query}--//.
+            //   Answer:
+            // `;
+
+              const finalPrompt = instructions + `\n """${plainText}"""` + `\n Question://--${query}--//`
+
+              try {
+                await checkIfRowExists(finalPrompt);
+                const result = await processAnswers();
+
+                console.log("All processes have been completed successfully");
+
+                res.status(200).json(result);
+              } catch (error) {
+                if (error.response) {
+                  console.error(error.response.status, error.response.data);
+                  res.status(error.response.status).json(error.response.data);
+                } else {
+                  console.error(`Error with request: ${error.message}`);
+                  res
+                    .status(500)
+                    .json({ error: "An error occurred during your request." });
+                }
+              }
+            } else {
+              try {
+                const result = await processAnswers();
+
+                console.log("All processes have been completed successfully");
+
+                res.status(200).json(result);
+              } catch (error) {
+                if (error.response) {
+                  console.error(error.response.status, error.response.data);
+                  res.status(error.response.status).json(error.response.data);
+                } else {
+                  console.error(`Error with request: ${error.message}`);
+                  res
+                    .status(500)
+                    .json({ error: "An error occurred during your request." });
+                }
+              }
+            }
+          }
+        } else {
+          // Handle the case where there are no similarity scores
+          console.log("No similarity scores found.");
+          try {
+            if (retryQuery === undefined) {
+              await checkIfRowExists(query);
+            }
+            const result = await processAnswers();
+
             console.log("All processes have been completed successfully");
-  
+
             res.status(200).json(result);
           } catch (error) {
             if (error.response) {
@@ -422,95 +534,15 @@ app.post("/api/api", async (req, res) => {
                 .json({ error: "An error occurred during your request." });
             }
           }
-        } else {
-          // To get the results
-  
-        const mostSimilar = top5SimilarPages[0].pageData.page_text;
-        const inputText = mostSimilar;
-  
-        const plainText = inputText.replace(/[+\n]/g, "");
-  
-        console.log("Highest similarity info chosen");
-
-        if(retryQuery === undefined){
-          const finalPrompt = `
-              Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
-              Question://--${query}--//.
-              Answer:
-            `;
-  
-        try {
-             await checkIfRowExists(finalPrompt)
-          const result = await processAnswers()
-          
-          console.log("All processes have been completed successfully");
-  
-          res.status(200).json(result);
-        } catch (error) {
-          if (error.response) {
-            console.error(error.response.status, error.response.data);
-            res.status(error.response.status).json(error.response.data);
-          } else {
-            console.error(`Error with request: ${error.message}`);
-            res
-              .status(500)
-              .json({ error: "An error occurred during your request." });
-          }
         }
-        }else{
-        try {
-          const result = await processAnswers()
-          
-          console.log("All processes have been completed successfully");
-  
-          res.status(200).json(result);
-        } catch (error) {
-          if (error.response) {
-            console.error(error.response.status, error.response.data);
-            res.status(error.response.status).json(error.response.data);
-          } else {
-            console.error(`Error with request: ${error.message}`);
-            res
-              .status(500)
-              .json({ error: "An error occurred during your request." });
-          }
-        }
-        }
-        }
-  
-                
-      } else {
-        // Handle the case where there are no similarity scores
-        console.log("No similarity scores found.");
-        try {
-          if(retryQuery === undefined){
-            await checkIfRowExists(query)
-          }
-          const result = await processAnswers()
-
-          console.log("All processes have been completed successfully");
-
-          res.status(200).json(result);
-        } catch (error) {
-          if (error.response) {
-            console.error(error.response.status, error.response.data);
-            res.status(error.response.status).json(error.response.data);
-          } else {
-            console.error(`Error with request: ${error.message}`);
-            res
-              .status(500)
-              .json({ error: "An error occurred during your request." });
-          }
-        }
+      } catch (err) {
+        console.log(err);
       }
-    } catch (err) {
-      console.log(err)
-    }    
-  }
+    }
 
-  await calculateSimilarityScores(xq, pdfData);
+    await calculateSimilarityScores(xq, pdfData);
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
 });
 
