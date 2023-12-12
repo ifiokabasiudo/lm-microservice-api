@@ -425,7 +425,7 @@ app.post("/api/api", async (req, res) => {
           const top5SimilarPages = similarityScores.slice(0, 5);
           console.log(top5SimilarPages);
 
-          if (top5SimilarPages[0].similarity < 0.75) {
+          if (top5SimilarPages[0].similarity < 0.7) {
             console.log("Highest similarity score was less than 0.75");
             try {
               if (retryQuery === undefined) {
