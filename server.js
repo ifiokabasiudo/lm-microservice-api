@@ -428,7 +428,7 @@ app.post("/api/api", async (req, res) => {
         // Sort by similarity in descending order
         similarityScores.sort((a, b) => b.similarity - a.similarity);
 
-        if (similarityScores.length > 0) {
+        if (similarityScores.length > 0 && nameOfFile !== "global") {
           // Select the top 5 pages
           const top5SimilarPages = similarityScores.slice(0, 5);
           console.log(top5SimilarPages);
