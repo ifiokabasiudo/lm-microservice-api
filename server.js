@@ -215,7 +215,8 @@ app.post("/api/api", async (req, res) => {
               const { data: updatedData, error: updateError } = await supabase
                 .from("chats")
                 .update({ chats: updatedArray })
-                .eq("user_id", userId);
+                .eq("user_id", userId)
+                .eq("pdf_name", nameOfFile)
 
               if (updateError) {
                 // Handle the update error.
@@ -270,7 +271,8 @@ app.post("/api/api", async (req, res) => {
               const { data: updatedData, error: updateError } = await supabase
                 .from("chats")
                 .update({ chats: updatedArray })
-                .eq("user_id", userId);
+                .eq("user_id", userId)
+                .eq("pdf_name", nameOfFile)
 
               if (updateError) {
                 // Handle the update error.
