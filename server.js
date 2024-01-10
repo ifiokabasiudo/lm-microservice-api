@@ -352,7 +352,6 @@ app.post("/api/api", async (req, res) => {
           messages: lastElements,
           model: "gpt-3.5-turbo-1106",
           max_tokens: 2048,
-          stream: true,
         });
 
         // let chatResponse = ""
