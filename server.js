@@ -355,15 +355,15 @@ app.post("/api/api", async (req, res) => {
           stream: true,
         });
 
-        let chatResponse = ""
+        // let chatResponse = ""
 
-        for await (const chunk of stream) {
-          chatResponse += process.stdout.write(chunk.choices[0]?.delta?.content || "")
-        }
+        // for await (const chunk of stream) {
+        //   chatResponse += process.stdout.write(chunk.choices[0]?.delta?.content || "")
+        // }
 
-        console.log("Chat completion success: " + chatResponse);
+        console.log("Chat completion success: " + stream);
 
-        // const chatResponse = chatCompletion.choices[0].message.content;
+        const chatResponse = stream.choices[0].message.content;
 
         console.log(
           "This is the history last role. It should be user: " +
