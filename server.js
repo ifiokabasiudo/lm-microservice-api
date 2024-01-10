@@ -348,15 +348,22 @@ app.post("/api/api", async (req, res) => {
             ? history.slice(-elementsToRemember)
             : history;
 
-        const chatCompletion = await openai.chat.completions.create({
+        const stream = await openai.chat.completions.create({
           messages: lastElements,
           model: "gpt-3.5-turbo-1106",
           max_tokens: 2048,
+          stream: true,
         });
 
-        console.log("Chat completion success: " + chatCompletion);
+        let chatResponse = ""
 
-        const chatResponse = chatCompletion.choices[0].message.content;
+        for await (const chunk of stream) {
+          chatResponse += process.stdout.write(chunk.choices[0]?.delta?.content || "")
+        }
+
+        console.log("Chat completion success: " + chatResponse);
+
+        // const chatResponse = chatCompletion.choices[0].message.content;
 
         console.log(
           "This is the history last role. It should be user: " +
