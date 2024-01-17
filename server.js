@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios"); // You may need to install axios if not already installed
+const bodyParser = require("body-parser")
 const { OpenAI } = require("openai");
 const { createClient } = require("@supabase/supabase-js");
 const cors = require("cors");
@@ -8,6 +9,7 @@ require("dotenv").config();
 const app = express();
 
 app.use(cors());
+app.use(bodyParser.json())
 
 // Initialize Openai
 const openai = new OpenAI({
@@ -31,10 +33,15 @@ const supabase = createClient(supaUrl, supaKey);
 app.use(express.json()); // Parse JSON requests
 
 app.post("/api/api", async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+
   try {
     const json = req.body;
     const nameOfFile = json.nameOfFile; // Replace with your logic to get the file name
     const userId = json.userId;
+    const country = json.country;
     const retryQuery = json.retryQuery;
     const query = json.query || "";
     console.log("This is the json: ", nameOfFile);
@@ -166,7 +173,8 @@ app.post("/api/api", async (req, res) => {
             {
               user_id: userId,
               chats: [{ role: "user", content: finalPrompt }],
-              pdf_name : nameOfFile
+              pdf_name : nameOfFile,
+              country: country,
             },
           ])
           .select();
@@ -348,22 +356,32 @@ app.post("/api/api", async (req, res) => {
             ? history.slice(-elementsToRemember)
             : history;
 
-        const stream = await openai.chat.completions.create({
+        const chatCompletion = await openai.chat.completions.create({
           messages: lastElements,
           model: "gpt-3.5-turbo-1106",
           max_tokens: 2048,
-          stream: true,
         });
 
         // let chatResponse = ""
 
         // for await (const chunk of stream) {
-        //   chatResponse += process.stdout.write(chunk.choices[0]?.delta?.content || "")
+        //   res.write(`data: ${JSON.stringify({ responses: process.stdout.write(chunk.choices[0]?.delta?.content || "") })}\n\n`)
         // }
 
-        console.log("Chat completion success: " + stream);
+        // res.end()
 
-        const chatResponse = stream.choices[0].message.content;
+        //eventSource.onmessage = (event) => {
+        //JSON.parse(event.data).response;
+        //console.log('Received chunk from backend:', responseData)
+        //}
+
+        //eventSource.error = (error) => {
+          // console.error('Error:')
+        // }
+
+        console.log("Chat completion success: " + chatCompletion);
+
+        const chatResponse = chatCompletion.choices[0].message.content;
 
         console.log(
           "This is the history last role. It should be user: " +
