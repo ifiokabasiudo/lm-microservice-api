@@ -32,10 +32,10 @@ const supabase = createClient(supaUrl, supaKey);
 
 app.use(express.json()); // Parse JSON requests
 
+  console.log("ITS STILL OUTSIDE POST")
+
 app.post("/api/api", async (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache')
-  res.setHeader('Connection', 'keep-alive')
+  console.log("IT GOT WITHIN POST")
 
   try {
     const json = req.body;
