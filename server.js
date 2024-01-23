@@ -496,7 +496,7 @@ app.post("/api/api", async (req, res) => {
                 top5SimilarPages[0].pageData.pdf_name +
                 " from page " +
                 String(top5SimilarPages[0].pageData.page_number) +
-                ' delimited by tripple quotes and a question. Your task is to answer the question using only the provided document and to cite passages of the document used to anser the question. If an answer to a question is provided, it must be annotated with a citation. Use the following format for citing relevant passages ({"citation":...})';
+                ' delimited by tripple quotes and a question. Your task is to answer the question using only the provided document and to cite passages of the document used to anser the question. If an answer to a question is provided, it must be annotated with the page number. Use the following format for annotating the pages ({Page: ' + String(top5SimilarPages[0].pageData.page_number) + '})';
 
             //   const finalPrompt = `
             //   Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
