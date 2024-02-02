@@ -1,6 +1,6 @@
 const express = require("express");
 const axios = require("axios"); // You may need to install axios if not already installed
-const bodyParser = require("body-parser")
+const bodyParser = require("body-parser");
 const { OpenAI } = require("openai");
 const { createClient } = require("@supabase/supabase-js");
 const cors = require("cors");
@@ -9,7 +9,7 @@ require("dotenv").config();
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 
 // Initialize Openai
 const openai = new OpenAI({
@@ -32,16 +32,18 @@ const supabase = createClient(supaUrl, supaKey);
 
 app.use(express.json()); // Parse JSON requests
 
-  console.log("ITS STILL OUTSIDE POST")
+console.log("ITS STILL OUTSIDE POST");
 
 app.post("/api/api", async (req, res) => {
-  console.log("IT GOT WITHIN POST")
+  console.log("IT GOT WITHIN POST");
 
   try {
     const json = req.body;
     const nameOfFile = json.nameOfFile; // Replace with your logic to get the file name
     const userId = json.userId;
     const country = json.country;
+    const role = json.role;
+    const institute = json.institute;
     const retryQuery = json.retryQuery;
     const query = json.query || "";
     console.log("This is the json: ", nameOfFile);
@@ -150,7 +152,7 @@ app.post("/api/api", async (req, res) => {
           .from("chats")
           .select()
           .eq("user_id", condition.column_value)
-          .eq("pdf_name", nameOfFile)
+          .eq("pdf_name", nameOfFile);
 
         if (error) {
           console.log(error);
@@ -173,8 +175,10 @@ app.post("/api/api", async (req, res) => {
             {
               user_id: userId,
               chats: [{ role: "user", content: finalPrompt }],
-              pdf_name : nameOfFile,
+              pdf_name: nameOfFile,
               country: country,
+              role: role,
+              institute: institute,
             },
           ])
           .select();
@@ -191,8 +195,7 @@ app.post("/api/api", async (req, res) => {
           .from("chats")
           .select("chats")
           .eq("user_id", userId)
-          .eq("pdf_name", nameOfFile)
-
+          .eq("pdf_name", nameOfFile);
 
         if (rowData && rowData.length > 0) {
           const currentArray = rowData[0].chats;
@@ -224,7 +227,7 @@ app.post("/api/api", async (req, res) => {
                 .from("chats")
                 .update({ chats: updatedArray })
                 .eq("user_id", userId)
-                .eq("pdf_name", nameOfFile)
+                .eq("pdf_name", nameOfFile);
 
               if (updateError) {
                 // Handle the update error.
@@ -249,7 +252,7 @@ app.post("/api/api", async (req, res) => {
           .from("chats")
           .select("chats")
           .eq("user_id", userId)
-          .eq("pdf_name", nameOfFile)
+          .eq("pdf_name", nameOfFile);
 
         if (rowData && rowData.length > 0) {
           const currentArray = rowData[0].chats;
@@ -280,7 +283,7 @@ app.post("/api/api", async (req, res) => {
                 .from("chats")
                 .update({ chats: updatedArray })
                 .eq("user_id", userId)
-                .eq("pdf_name", nameOfFile)
+                .eq("pdf_name", nameOfFile);
 
               if (updateError) {
                 // Handle the update error.
@@ -307,7 +310,7 @@ app.post("/api/api", async (req, res) => {
           .from("chats")
           .select()
           .eq("user_id", condition.column_value)
-          .eq("pdf_name", nameOfFile)
+          .eq("pdf_name", nameOfFile);
 
         if (data && data.length > 0) {
           const history = await getChatHistory();
@@ -319,7 +322,7 @@ app.post("/api/api", async (req, res) => {
 
           if (history[history.length - 1].role === "assistant") {
             await upsertUser(
-              finalPrompt 
+              finalPrompt
               // + "--//After responding with an answer, give 3 suggestions for more questions the user can ask"
             );
           } else {
@@ -328,7 +331,7 @@ app.post("/api/api", async (req, res) => {
         } else {
           await createUser(
             finalPrompt
-              // + "--//After responding with an answer, give 3 suggestions for more questions the user can ask"
+            // + "--//After responding with an answer, give 3 suggestions for more questions the user can ask"
           );
         }
       } catch (err) {
@@ -376,7 +379,7 @@ app.post("/api/api", async (req, res) => {
         //}
 
         //eventSource.error = (error) => {
-          // console.error('Error:')
+        // console.error('Error:')
         // }
 
         console.log("Chat completion success: " + chatCompletion);
@@ -496,15 +499,20 @@ app.post("/api/api", async (req, res) => {
                 top5SimilarPages[0].pageData.pdf_name +
                 " from page " +
                 String(top5SimilarPages[0].pageData.page_number) +
-                ' delimited by tripple quotes and a question. Your task is to answer the question using only the provided document and to cite passages of the document used to anser the question. If an answer to a question is provided, it must be annotated with the page number. Use the following format for annotating the pages ({Page: ' + String(top5SimilarPages[0].pageData.page_number) + '})';
+                " delimited by tripple quotes and a question. Your task is to answer the question using only the provided document and to cite passages of the document used to anser the question. If an answer to a question is provided, it must be annotated with the page number. Use the following format for annotating the pages ({Page: " +
+                String(top5SimilarPages[0].pageData.page_number) +
+                "})";
 
-            //   const finalPrompt = `
-            //   Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
-            //   Question://--${query}--//.
-            //   Answer:
-            // `;
+              //   const finalPrompt = `
+              //   Info: Using this info: ${plainText} make the answer as explanatory as possible. With points and examples
+              //   Question://--${query}--//.
+              //   Answer:
+              // `;
 
-              const finalPrompt = instructions + `\n """${plainText}"""` + ` \nQuestion://--${query}--//`
+              const finalPrompt =
+                instructions +
+                `\n """${plainText}"""` +
+                ` \nQuestion://--${query}--//`;
 
               try {
                 await checkIfRowExists(finalPrompt);
