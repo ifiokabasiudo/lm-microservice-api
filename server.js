@@ -167,6 +167,10 @@ app.post("/api/api", async (req, res) => {
 
       // return data;
     };
+
+    let date = new Date().toJSON();
+    console.log(date); // 2022-06-17T11:06:50.369Z
+
     const createUser = async (finalPrompt) => {
       try {
         const { data, error } = await supabase
@@ -174,7 +178,7 @@ app.post("/api/api", async (req, res) => {
           .insert([
             {
               user_id: userId,
-              chats: [{ role: "user", content: finalPrompt }],
+              chats: [{ role: "user", content: finalPrompt, time: new Date().toJSON() }],
               pdf_name: nameOfFile,
               country: country,
               role: role,
@@ -272,7 +276,7 @@ app.post("/api/api", async (req, res) => {
             updatedArray = currentArray;
           } else {
             // Add a new entry for the assistant's response
-            const newValue = { role: "user", content: finalPrompt };
+            const newValue = { role: "user", content: finalPrompt, time: new Date().toJSON() };
             updatedArray = [...currentArray, newValue];
           }
 
