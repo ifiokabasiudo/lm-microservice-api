@@ -178,7 +178,7 @@ app.post("/api/api", async (req, res) => {
           .insert([
             {
               user_id: userId,
-              chats: [{ role: "user", content: finalPrompt, time: new Date().toJSON() }],
+              chats: [{ role: "user", content: finalPrompt, time: new Date().toJSON() }, { role: "user", content: finalPrompt, time: new Date().toJSON() }],
               pdf_name: nameOfFile,
               country: country,
               role: role,
@@ -362,9 +362,17 @@ app.post("/api/api", async (req, res) => {
           history.length > elementsToRemember
             ? history.slice(-elementsToRemember)
             : history;
+            
+            // Remove the time key-value pair from each object
+            const queryWithoutTime = lastElements.map(item => {
+              const { time, ...rest } = item; // Destructure the object, omitting the 'time' key
+              return rest; // Return the object without the 'time' key-value pair
+            });
+            
+            console.log(queryWithoutTime);
 
         const chatCompletion = await openai.chat.completions.create({
-          messages: lastElements,
+          messages: queryWithoutTime,
           model: "gpt-3.5-turbo-1106",
           max_tokens: 2048,
         });
