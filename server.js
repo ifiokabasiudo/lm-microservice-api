@@ -193,7 +193,7 @@ app.post("/api/api", async (req, res) => {
       }
     };
 
-    const upsertAssistant = async (response) => {
+    const upsertAssistant = async (response, pages) => {
       try {
         const { data: rowData, error } = await supabase
           .from("chats")
@@ -219,7 +219,7 @@ app.post("/api/api", async (req, res) => {
             updatedArray = currentArray;
           } else {
             // Add a new entry for the assistant's response
-            const newValue = { role: "assistant", content: response };
+            const newValue = { role: "assistant", content: response, pages: pages };
             updatedArray = [...currentArray, newValue];
           }
 
@@ -343,7 +343,7 @@ app.post("/api/api", async (req, res) => {
       }
     };
 
-    const processAnswers = async () => {
+    const processAnswers = async (pages) => {
       // try {
       //   function delay(ms) {
       //     return new Promise(resolve => setTimeout(resolve, ms));
@@ -364,15 +364,15 @@ app.post("/api/api", async (req, res) => {
             : history;
             
             // Remove the time key-value pair from each object
-            const queryWithoutTime = lastElements.map(item => {
-              const { time, ...rest } = item; // Destructure the object, omitting the 'time' key
+            const queryWithoutPageTime = lastElements.map(item => {
+              const { time, pages, ...rest } = item; // Destructure the object, omitting the 'time' key
               return rest; // Return the object without the 'time' key-value pair
             });
             
-            console.log(queryWithoutTime);
+            console.log(queryWithoutPageTime);
 
         const chatCompletion = await openai.chat.completions.create({
-          messages: queryWithoutTime,
+          messages: queryWithoutPageTime,
           model: "gpt-3.5-turbo-1106",
           max_tokens: 2048,
         });
@@ -404,7 +404,7 @@ app.post("/api/api", async (req, res) => {
         );
 
         if (history[history.length - 1].role === "user") {
-          await upsertAssistant(chatResponse);
+          await upsertAssistant(chatResponse, pages);
         } else {
           console.log("This was the error");
           res.json(400).send("There was an error sending your query");
@@ -479,7 +479,7 @@ app.post("/api/api", async (req, res) => {
               if (retryQuery === undefined) {
                 await checkIfRowExists(query);
               }
-              const result = await processAnswers();
+              const result = await processAnswers(String(top5SimilarPages[0].pageData.page_number));
 
               console.log("All processes have been completed successfully");
 
@@ -528,7 +528,7 @@ app.post("/api/api", async (req, res) => {
 
               try {
                 await checkIfRowExists(finalPrompt);
-                const result = await processAnswers();
+                const result = await processAnswers(String(top5SimilarPages[0].pageData.page_number));
 
                 console.log("All processes have been completed successfully");
 
@@ -546,7 +546,7 @@ app.post("/api/api", async (req, res) => {
               }
             } else {
               try {
-                const result = await processAnswers();
+                const result = await processAnswers("");
 
                 console.log("All processes have been completed successfully");
 
@@ -571,7 +571,7 @@ app.post("/api/api", async (req, res) => {
             if (retryQuery === undefined) {
               await checkIfRowExists(query);
             }
-            const result = await processAnswers();
+            const result = await processAnswers("");
 
             console.log("All processes have been completed successfully");
 
