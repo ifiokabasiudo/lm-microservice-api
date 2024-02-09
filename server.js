@@ -307,6 +307,7 @@ app.post("/api/api", async (req, res) => {
     };
 
     const checkIfRowExists = async (finalPrompt) => {
+      console.log("Check if row exists")
       try {
         const condition = { column_value: userId }; // Replace with your own condition
 
@@ -325,6 +326,7 @@ app.post("/api/api", async (req, res) => {
           );
 
           if (history[history.length - 1].role === "assistant") {
+            console.log("Upsert user")
             await upsertUser(
               finalPrompt
               // + "--//After responding with an answer, give 3 suggestions for more questions the user can ask"
@@ -333,6 +335,7 @@ app.post("/api/api", async (req, res) => {
             res.json(400).send("There was an error sending your query");
           }
         } else {
+          console.log("Create user")
           await createUser(
             finalPrompt
             // + "--//After responding with an answer, give 3 suggestions for more questions the user can ask"
