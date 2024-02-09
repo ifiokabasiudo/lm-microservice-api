@@ -178,7 +178,7 @@ app.post("/api/api", async (req, res) => {
           .insert([
             {
               user_id: userId,
-              chats: [{ role: "user", content: finalPrompt, time: new Date().toJSON() }, { role: "user", content: finalPrompt, time: new Date().toJSON() }],
+              chats: [{ role: "user", content: finalPrompt, time: new Date().toJSON() }],
               pdf_name: nameOfFile,
               country: country,
               role: role,
